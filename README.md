@@ -47,6 +47,7 @@ First run for a brand: the chain scrapes the site, asks five questions, pulls re
 - `clients/{brand}/` with five context files the chain reuses forever: brand kit, brand guide, ICP with real customer language, rules that compound, reference and proof inventory
 - `ads/{brand}-{date}/` per run: every concept rendered at 4:5 for review, `copy.md` with the reader's pain in their words and headline variants, `manifest.json`, the review gallery
 - For everything you keep: the full placement set at 4:5, 1:1 and 9:16, plus a paired caption
+- With Paper Desktop open: every rendered concept also lands in a Paper file as an editable artboard, brand colours as design tokens, so a designer can fix taste by hand and export
 - Kills become rules. Standing preferences become defaults. The wildcard in every batch keeps the system from converging on last batch.
 
 ## The eight formats

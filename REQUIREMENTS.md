@@ -33,6 +33,8 @@ claude mcp add --transport http -s user apify https://mcp.apify.com
 
 **Playwright MCP** (browsing the Ad Library directly). Without it the chain uses Apify or keyword search.
 
+**Paper Desktop** (https://paper.design, free tier). With the app open, every type, proof, testimonial, table and screenshot render also lands in a Paper file as an editable artboard, with your brand colours as design tokens, and Paper exports the PNG. Nothing to configure: the renderer finds the app on localhost. Install your brand's font files in Font Book first and restart Paper. Details: `skills/ad-engine/render/PAPER.md`.
+
 ## Notes on the two flags
 
 `--transport http` is required for hosted MCP servers. `-s user` makes the server available in every folder, not only the one you ran the command in. Both flags go before the server name and URL.
@@ -55,5 +57,6 @@ open examples/out/contact-sheet.png
 | Firecrawl MCP | onboarding a brand from its URL | add the MCP, or paste brand facts by hand |
 | Higgsfield MCP | photographic renders | add the connector; type formats still render |
 | Apify MCP | named-competitor research | optional |
+| Paper Desktop open | editable artboards of every rendered concept | optional |
 
 The chain stops only when it has nothing to work with: no Firecrawl and no pasted brand facts, or no Higgsfield and no working renderer. Anything else degrades to a documented fallback.

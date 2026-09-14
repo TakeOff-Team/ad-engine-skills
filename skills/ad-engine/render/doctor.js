@@ -43,14 +43,28 @@ if (!out.templates.length) out.fixes.push('No templates found next to render.js 
 
 out.ready = out.node_ok && out.deps_ok && out.chromium_ok && out.templates.length > 0;
 
-if (process.argv.includes('--json')) { console.log(JSON.stringify(out, null, 2)); process.exit(out.ready ? 0 : 1); }
+// Paper Desktop (optional — mode 3, editable artboards). Its MCP server only exists while the app is open; paper.js talks
+// to it directly over localhost, so this is an app-is-open check, not an MCP-tools-in-session check.
+function probePaper() {
+  return new Promise(resolve => {
+    const http = require('http');
+    const req = http.get({ host: '127.0.0.1', port: 29979, path: '/mcp', timeout: 1500 }, res => { res.resume(); resolve(true); });
+    req.on('error', () => resolve(false)); req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
+}
 
-const tick = b => (b ? '✓' : '✗');
-console.log('\nad-engine renderer doctor');
-console.log(`  ${tick(out.node_ok)} Node ${out.node}${out.node_ok ? '' : '  (need ≥ 18)'}`);
-console.log(`  ${tick(out.deps_ok)} playwright installed in render/node_modules`);
-console.log(`  ${tick(out.chromium_ok)} Chromium build present${out.chromium_path ? '  ' + out.chromium_path.replace(process.env.HOME || '', '~') : ''}`);
-console.log(`  ${tick(out.templates.length > 0)} ${out.templates.length} templates: ${out.templates.join(', ')}`);
-if (out.fixes.length) { console.log('\nFix:'); out.fixes.forEach(f => console.log('  - ' + f)); }
-console.log(out.ready ? '\nRenderer ready.\n' : '\nRenderer NOT ready.\n');
-process.exit(out.ready ? 0 : 1);
+(async () => {
+  out.paper_ok = await probePaper();
+  if (process.argv.includes('--json')) { console.log(JSON.stringify(out, null, 2)); process.exit(out.ready ? 0 : 1); }
+
+  const tick = b => (b ? '✓' : '✗');
+  console.log('\nad-engine renderer doctor');
+  console.log(`  ${tick(out.node_ok)} Node ${out.node}${out.node_ok ? '' : '  (need ≥ 18)'}`);
+  console.log(`  ${tick(out.deps_ok)} playwright installed in render/node_modules`);
+  console.log(`  ${tick(out.chromium_ok)} Chromium build present${out.chromium_path ? '  ' + out.chromium_path.replace(process.env.HOME || '', '~') : ''}`);
+  console.log(`  ${tick(out.templates.length > 0)} ${out.templates.length} templates: ${out.templates.join(', ')}`);
+  console.log(`  ${out.paper_ok ? '✓' : '○'} Paper Desktop ${out.paper_ok ? 'open — mode 3 (editable artboards via paper.js) available' : 'not open — optional; open the app to render into Paper (render/PAPER.md)'}`);
+  if (out.fixes.length) { console.log('\nFix:'); out.fixes.forEach(f => console.log('  - ' + f)); }
+  console.log(out.ready ? '\nRenderer ready.\n' : '\nRenderer NOT ready.\n');
+  process.exit(out.ready ? 0 : 1);
+})();

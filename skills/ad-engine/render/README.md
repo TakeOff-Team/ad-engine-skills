@@ -61,7 +61,15 @@ node .claude/skills/ad-engine/render/render.js <render-spec.json> [--sheet] [--o
 | `social-proof-capture` | a real post / DM / review, framed | `capture` (img, REAL) `headline` `caption` `source` `disclaimer` `cta` `theme` (`""` · `ink` · `primary`) | **empty `capture` renders a red REAL CAPTURE REQUIRED block**; never fabricates a post |
 | `photo-text-band` | Higgsfield scene + headline band (hybrid) | `photo` (img) `eyebrow` `headline` (`<em>` accent) `subhead` `cta` `band` (`bottom` · `top`) `band-theme` (`""` primary · `ink` · `paper`) `disclaimer` | empty `photo` renders a red PHOTO REQUIRED block |
 
-Every template is fixture-tested at `4:5`, `1:1`, and `9:16` — `examples/render-spec.aspects.json` → `examples/out-aspects/contact-sheet.png`. `doctor.js` checks the local environment (`node doctor.js`).
+Every template is fixture-tested at `4:5`, `1:1`, and `9:16` — `examples/render-spec.aspects.json` → `examples/out-aspects/contact-sheet.png`. `doctor.js` checks the local environment (`node doctor.js`), including whether Paper Desktop is open.
+
+## Paper (mode 3) — same templates, editable artboards
+
+```bash
+node .claude/skills/ad-engine/render/paper.js <render-spec.json> [--only=c01] [--replace]
+```
+
+Runs the identical pipeline in Playwright (fit + every QA check), then pushes each fitted render into the brand's [Paper](https://paper.design) file as positioned, editable nodes, has Paper export the PNG to `images/paper/`, and pixel-diffs it against the Playwright screenshot. Results in `paper-results.json` (same `by_id` contract, plus `file_url` / `artboard_id` / `node_ids`). Needs Paper Desktop open and the brand fonts installed in Font Book. Full contract, limits and the fill-mode roadmap: [PAPER.md](PAPER.md).
 
 `brand-name` and `logo` are injected into every template from `spec.brand` — you never set them per render.
 
@@ -88,7 +96,7 @@ Every new template gets a fixture in `examples/render-spec.example.json` and a l
 
 ## Verification the renderer does for you
 
-For each render: the output file exists, the PNG header parses, the dimensions equal the requested canvas. Anything else is reported as a failure, never silently. Then a **visual QA pass** on the live DOM: `OVERFLOW` (text wider than its cell, or spilling past its container / off the canvas), `COLLISION` (table cells overlapping), `CROP` (an `object-fit: cover` image losing more than 10% of an axis; mark intentionally full-bleed images `data-crop-ok`), `CONTRAST` (every text slot against its real ground, below 3:1). A render can *succeed* and still carry warnings — read them; they are the pre-QA flags. `examples/render-spec.qa-test.json` is the fixture that makes each check fire on purpose.
+For each render: the output file exists, the PNG header parses, the dimensions equal the requested canvas. Anything else is reported as a failure, never silently. A **`FONT` warning** fires when a brand face (`font_display` / `font_body` / `font_mono`) did not actually load and a fallback was drawn — detected by measurement, so a locally installed face counts (offline runs, a typo in `google_fonts`, a missing `font_faces` file). Then a **visual QA pass** on the live DOM: `OVERFLOW` (text wider than its cell, or spilling past its container / off the canvas), `COLLISION` (table cells overlapping), `CROP` (an `object-fit: cover` image losing more than 10% of an axis; mark intentionally full-bleed images `data-crop-ok`), `CONTRAST` (every text slot against its real ground, below 3:1). A render can *succeed* and still carry warnings — read them; they are the pre-QA flags. `examples/render-spec.qa-test.json` is the fixture that makes each check fire on purpose.
 
 `render-results.json` shape (the per-render boolean is **`ok`** — there is no `status` field):
 

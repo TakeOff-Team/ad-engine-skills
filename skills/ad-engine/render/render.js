@@ -249,6 +249,65 @@ async function waitForAssets(page) {
   await page.waitForTimeout(150);
 }
 
+// The per-render DOM pipeline, shared by render.js (screenshot) and paper.js (snapshot → Paper):
+// template → brand tokens + fonts → slots → __sync → assets → fit → __afterFit → __qa → visual QA.
+// `res.warnings` / `res.fit` are filled in place; the page is left at its final, fitted state.
+async function prepareRender(page, ctx, r, res) {
+  const { spec, specDir, tokens, fontFaces, fontsHref, tpl } = ctx;
+  await page.goto(`file://${tpl}`);
+  await page.addStyleTag({ content: tokens });
+  if (fontFaces) await page.addStyleTag({ content: fontFaces });
+  await page.evaluate((href) => {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
+  }, fontsHref);
+  // brand logo + name are universal slots every template may use
+  // name_in_header:false suppresses the text wordmark when the logo already IS the wordmark (The AI Course: logo + "The AI Course" read twice)
+  const slots = { 'brand-name': spec.brand?.name_in_header === false ? '' : (spec.brand?.name || ''), 'logo': spec.brand?.logo_url || '', ...(r.slots || {}) };
+  // image slots may be given as paths relative to the spec file (portable fixtures, downloaded renders)
+  for (const [k, v] of Object.entries(slots)) {
+    if (typeof v === 'string' && /\.(png|jpe?g|webp|gif|svg)$/i.test(v.trim()) && !/^(https?:|file:|data:)/i.test(v.trim())) {
+      const abs = path.isAbsolute(v) ? v : path.resolve(specDir, v);
+      if (fs.existsSync(abs)) slots[k] = 'file://' + abs;
+      else res.warnings.push(`image for slot "${k}" not found: ${abs}`);
+    }
+  }
+  const report = await injectSlots(page, slots);
+  await page.evaluate(() => { if (typeof window.__sync === 'function') window.__sync(); });
+  if (report.missing.length) res.warnings.push(`required slots empty: ${report.missing.join(', ')}`);
+  if (report.unknown.length) res.warnings.push(`unknown slots ignored: ${report.unknown.join(', ')}`);
+  await waitForAssets(page);
+  // Fonts: document.fonts.ready resolves immediately for an injected @font-face nobody has requested yet, so measure
+  // only after every brand face is explicitly loaded. NOTE (corrected 2026-09-13): this was NOT the cause of The AI
+  // Course's small headlines — fit logged size 200, clipped:false. Pixel/bitmap faces (PP NeueBit) simply draw small for
+  // their em; that is what brand.display_scale is for. Keep this step for correctness, don't blame it for size.
+  await page.evaluate(async (fams) => {
+    for (const f of fams) { try { await document.fonts.load(`${f.weight || 400} 100px "${f.family}"`); } catch (e) {} }
+    try { await document.fonts.ready; } catch (e) {}
+  }, [...(spec.brand?.font_faces || []), ...[spec.brand?.font_display, spec.brand?.font_body, spec.brand?.font_mono].filter(Boolean).map(family => ({ family, weight: 700 }))]);
+  await page.waitForTimeout(60);
+  // Did the brand faces actually arrive? A Google Font that fails to load (offline, sandboxed, typo in the family name) falls
+  // back to Inter/system silently — the PNG still renders, the operator reviews the wrong typeface. Say so.
+  // Detection by measurement (a locally installed face never appears in document.fonts): the family renders a probe
+  // string at a different width than the generic fallback it is stacked on, or it is not there.
+  const fontStatus = await page.evaluate((fams) => fams.map(f => {
+    const probe = (stack) => { const s = document.createElement('span'); s.textContent = 'mmmmmmmmmmlllllllliiiiiiiiWWWWWWW0123456789'; s.style.cssText = `position:absolute;left:-9999px;top:-9999px;font-size:72px;font-family:${stack};white-space:nowrap`; document.body.appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; };
+    const loaded = probe(`"${f}", monospace`) !== probe('monospace') || probe(`"${f}", serif`) !== probe('serif');
+    return { family: f, loaded };
+  }), [...new Set([spec.brand?.font_display, spec.brand?.font_body, spec.brand?.font_mono].filter(Boolean))]);
+  for (const f of fontStatus) if (!f.loaded) res.warnings.push(`FONT: "${f.family}" did not load — rendered with a fallback face (check network / google_fonts / font_faces)`);
+  const fit = await fitText(page);
+  // __afterFit: layout that depends on FINAL fitted sizes (e.g. a table sized to the space the headline left)
+  await page.evaluate(() => { if (typeof window.__afterFit === 'function') window.__afterFit(); });
+  for (const f of fit) if (f.clipped) res.warnings.push(`text still clipped after fit: ${f.slot} @ ${f.size}px`);
+  res.fit = fit.map(f => ({ slot: f.slot, size: f.size, clipped: f.clipped, reason: f.reason }));   // record every fit decision — invisible shrinks cost a review round
+  // template-level QA flags (a template may expose window.__qa())
+  const qa = await page.evaluate(() => (typeof window.__qa === 'function' ? window.__qa() : []));
+  for (const q of qa) res.warnings.push(q);
+  // renderer-level visual QA — overflow / crop / contrast (the defects a dimension check can't see)
+  for (const v of await visualQA(page)) res.warnings.push(v);
+  return slots;
+}
+
 async function renderContactSheet(browser, files, outPath, cols = 4) {
   const cell = 360, pad = 12, label = 22;
   const rows = Math.ceil(files.length / cols);
@@ -312,47 +371,7 @@ async function main() {
     const page = await browser.newPage();
     await page.setViewportSize({ width: w, height: h });
     try {
-      await page.goto(`file://${tpl}`);
-      await page.addStyleTag({ content: tokens });
-      if (fontFaces) await page.addStyleTag({ content: fontFaces });
-      await page.evaluate((href) => {
-        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
-      }, fontsHref);
-      // brand logo + name are universal slots every template may use
-      // name_in_header:false suppresses the text wordmark when the logo already IS the wordmark (The AI Course: logo + "The AI Course" read twice)
-      const slots = { 'brand-name': spec.brand?.name_in_header === false ? '' : (spec.brand?.name || ''), 'logo': spec.brand?.logo_url || '', ...(r.slots || {}) };
-      // image slots may be given as paths relative to the spec file (portable fixtures, downloaded renders)
-      for (const [k, v] of Object.entries(slots)) {
-        if (typeof v === 'string' && /\.(png|jpe?g|webp|gif|svg)$/i.test(v.trim()) && !/^(https?:|file:|data:)/i.test(v.trim())) {
-          const abs = path.isAbsolute(v) ? v : path.resolve(specDir, v);
-          if (fs.existsSync(abs)) slots[k] = 'file://' + abs;
-          else res.warnings.push(`image for slot "${k}" not found: ${abs}`);
-        }
-      }
-      const report = await injectSlots(page, slots);
-      await page.evaluate(() => { if (typeof window.__sync === 'function') window.__sync(); });
-      if (report.missing.length) res.warnings.push(`required slots empty: ${report.missing.join(', ')}`);
-      if (report.unknown.length) res.warnings.push(`unknown slots ignored: ${report.unknown.join(', ')}`);
-      await waitForAssets(page);
-      // Fonts: document.fonts.ready resolves immediately for an injected @font-face nobody has requested yet, so measure
-      // only after every brand face is explicitly loaded. NOTE (corrected 2026-09-13): this was NOT the cause of The AI
-      // Course's small headlines — fit logged size 200, clipped:false. Pixel/bitmap faces (PP NeueBit) simply draw small for
-      // their em; that is what brand.display_scale is for. Keep this step for correctness, don't blame it for size.
-      await page.evaluate(async (fams) => {
-        for (const f of fams) { try { await document.fonts.load(`${f.weight || 400} 100px "${f.family}"`); } catch (e) {} }
-        try { await document.fonts.ready; } catch (e) {}
-      }, [...(spec.brand?.font_faces || []), ...[spec.brand?.font_display, spec.brand?.font_body, spec.brand?.font_mono].filter(Boolean).map(family => ({ family, weight: 700 }))]);
-      await page.waitForTimeout(60);
-      const fit = await fitText(page);
-      // __afterFit: layout that depends on FINAL fitted sizes (e.g. a table sized to the space the headline left)
-      await page.evaluate(() => { if (typeof window.__afterFit === 'function') window.__afterFit(); });
-      for (const f of fit) if (f.clipped) res.warnings.push(`text still clipped after fit: ${f.slot} @ ${f.size}px`);
-      res.fit = fit.map(f => ({ slot: f.slot, size: f.size, clipped: f.clipped, reason: f.reason }));   // record every fit decision — invisible shrinks cost a review round
-      // template-level QA flags (a template may expose window.__qa())
-      const qa = await page.evaluate(() => (typeof window.__qa === 'function' ? window.__qa() : []));
-      for (const q of qa) res.warnings.push(q);
-      // renderer-level visual QA — overflow / crop / contrast (the defects a dimension check can't see)
-      for (const v of await visualQA(page)) res.warnings.push(v);
+      await prepareRender(page, { spec, specDir, tokens, fontFaces, fontsHref, tpl }, r, res);
       await page.screenshot({ path: outFile, type: 'png' });
 
       // verify — never trust the write
@@ -405,4 +424,7 @@ async function main() {
   process.exit(summary.failed ? 2 : 0);
 }
 
-main().catch(e => { console.error('render error:', e); process.exit(1); });
+// paper.js (mode 3) reuses the per-render DOM pipeline — same tokens, fonts, slots, fit, QA — then snapshots the fitted DOM
+module.exports = { CANVAS, cssTokens, fontFacesCss, googleFontsHref, injectSlots, fitText, visualQA, waitForAssets, pngDimensions, prepareRender };
+
+if (require.main === module) main().catch(e => { console.error('render error:', e); process.exit(1); });
