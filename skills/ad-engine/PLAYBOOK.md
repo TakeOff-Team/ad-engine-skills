@@ -1,0 +1,153 @@
+# Ad Engine Playbook — shared reference for the ad-* skill chain
+
+The chain: `/ad-engine` (router) → `/ad-onboard` (once per brand) → `/ad-research` (once, then monthly) → `/ad-batch` (every run; invokes `/ad-copy` for the copy pass) → `/ad-review` (every run). **Renderer verdicts are structured and never lost.** `render.js` merges every result by id into `render-results.json` (plus `render-log.jsonl`); `blocking[]` = cannot ship (missing capture/photo/screenshot, no source line), `warnings[]` = a human must read (claims, authenticity, layout). `/ad-batch` copies both into the manifest and the gallery; `/ad-review` refuses `approved` on any blocking id without a dated `override_reason`. **Never grep stdout for flags.** (The AI Course, 2026-09-13: a grep for `OVERFLOW|CONTRAST` hid a "NO SOURCE — cannot ship", and the old overwrite-on-every-run results file deleted it. The chain approved that table.)
+
+**Read this file in full once at `/ad-engine` entry**, then each skill re-reads only the section it needs — Pneuma's run grepped it four separate times, which cost more than one full read. This file is the single maintained home for knowledge that spans stages. Field-tested on Rhoback (apparel), BUILT (packaged goods), Bloom Nutrition (cold-start, separate session), Kodiak Cakes (2026-09-03 — first cold start of the split chain; first clean Higgsfield MCP run, no fallback), Pneuma Media (2026-09-04 — first cold start of a **service** brand; both render paths live, 7 Playwright + 1 Higgsfield).
+
+## Design principles (each earned from a real failure — don't violate)
+1. **Check before generating.** Every context file is cached and reused. Never re-interview or re-scrape what exists — load, summarize in one line, ask "reuse or refresh?" **That includes the operator's own context base, not just ours:** `/ad-onboard` Step 0.5 sweeps their vault for an ICP, brand guide, transcripts, reviews, prior creative before asking a single question. The AI OS thesis in one rule — the context exists so the AI knows you; don't make people re-create it.
+2. **Show, don't ask.** People can't describe visual style in words but pick it instantly from images. Gallery, not questionnaires.
+3. **Reality before rendering.** Never render until real ads for this brand/category have been looked at. Rhoback batch 1 failed precisely because this was skipped.
+4. **Volume + curate.** Generate more than needed, let the human keep winners. Don't hand-polish single images.
+5. **Asymmetric error cost.** A weak angle wastes one test — soft gate. A wrong logo on a live ad damages a brand — hard gate. QA is never optional.
+6. **"Present" is not "correct."** A logo existing in the frame proves nothing. Zoom into the region; verify placement + spelling.
+7. **A kill with no reason is data, not a rule.** Record it, look for a pattern, ask before hardening. (Bloom: two reasonless kills nearly hardened "clean product photography loses" — the real causes were color presence and pack geometry.)
+9. **The brand's stylesheet is the source; the scraper's `branding` block is a hint.** (The AI Course, 2026-09-11: Firecrawl's summary invented a red `secondary`; the run shipped red creatives, and the real fonts were self-hosted `@font-face` files the skill never fetched. The operator's read: "not sure why the fuck it didn't pick all this up on the first scrape." Now `/ad-onboard` Step 1 pulls the CSS every time.) Corollary: **never write a visual-direction judgment into `brand-kit.md` from a transcript** — that's a gallery question.
+8. **Taste can harden into a *hard default*.** A Default is broken on purpose by the wildcard — except when the operator killed the same thing **twice with the same stated reason** (TakeOff: two photo directions, both "too AI-generated"). Record it in `## Defaults` as `hard default — not wildcard-eligible`, with both sources. Still taste, still revisable by the operator, but the wildcard doesn't re-test it every batch.
+
+## Context schema — five files per brand, `{CLIENTS_ROOT}/{slug}/`
+Resolve root: `04-Brand/clients` if it exists, else `./clients` (portable). **Runs live under the brand:** `{CLIENTS_ROOT}/{slug}/batches/{YYYY-MM-DD}-{name}/` (vault: CLAUDE.md's "client deliverables live in `04-Brand/clients/{name}/`"; portable: `./ads/{slug}-{date}/`). Runs before 2026-09-13 are in `05-Content/Ads/` — `/ad-review` searches both.
+
+**Slug rule (deterministic — two sessions must derive the same folder):** registrable domain, minus TLD and `www`, split on existing separators, else split the concatenation on known brand-word boundaries, lowercase, hyphen-joined. `kodiakcakes.com` → `kodiak-cakes`. `built.com` → `built`. **Strip legal suffixes** (`llc`, `inc`, `co`, `corp`, `ltd`): `pneumallc.com` → `pneuma`, not `pneuma-llc`. `--slug` always wins. Print the derived slug **and the brand's real name** (from the page title/H1/copy — **Firecrawl's `branding.brandName` is unreliable**: it returned a title fragment, "Convert Visitors To Customers", for Pneuma Media) before creating any folder — a wrong guess silently forks a duplicate brand.
+
+| File | Source | Holds |
+|---|---|---|
+| `brand-kit.md` | scrape | colors **as hex**, fonts **by name** (both become mode-2 CSS tokens — missing hex = default-blue renders), logo URL, reference photo URLs, scraped voice read |
+| `brand-guide.md` | interview | one-line pitch, tone words, pillars, competitor names, what not to say |
+| `icp.md` | interview — load-bearing | who actually buys (founder's words), trigger, anti-persona, VoC quotes |
+| `assets/references.md` | scrape (+ interview for service) | **Product brand:** 5-10 real product image URLs + per-SKU geometry notes (flat box / stand-up pouch / sachet / cylinder). **Service brand:** proxy-subject references (the client's world, the outcome, the people) **plus a proof inventory** — real result screenshots (source + date range), real testimonials (quote, name, source), headshots with permission. Mode-2 templates can only be filled from this inventory; what isn't in it doesn't get rendered. **`/ad-batch` cannot ground a render without this file** — count it in the onboarded-gate |
+| `rules.md` | interview + every QA failure + every standing preference | `## Rules`: hard constraints, pass/fail gated before every render — **defects and compliance only, never taste**. `## Default visual style`: from the style pick. `## Defaults`: operator's standing preferences + taste-level learnings — formats, batch size, cadence, model override. Rules make images *correct*; Defaults make runs *theirs*. **Rules are never broken. Defaults are broken on purpose by one wildcard per batch** — that's how the system stays alive instead of converging on last batch. |
+
+**`rules.md` frontmatter is structured, not prose.** Every brand's `rules.md` starts with YAML: `brand`, `brand_type: product | service`, `status: derived | founder-confirmed`, `updated`. Three forks hang off `brand_type` (which Block A, which model row, which QA lines) — Pneuma's run had it as an English sentence inside `references.md`, which `/ad-batch` had to *read* to route. `/ad-onboard` writes it at Step 1 and **announces it as a decision**; `/ad-engine` prints it in the status line.
+
+**`## Default visual style` has a fixed field list** — the style-pick export is `{id, decision, note}` and turning it into prose was the least reproducible step in the chain (two agents would write two different blocks). Always these fields, in this order, each one line: **Strategic call** (match / contrarian — *inferred* from the export: category references killed → contrarian; state the inference, don't pose it as a question and answer it yourself) · **Composition** · **Text on image** · **People** · **Polish level** (the operator's pick — never presumed) · **Mood** · **Logo treatment** · **Approved grounds / formats** · **Source** (which gallery items, with their notes verbatim).
+
+**Service brands get a sixth output: `proof-gaps.md`.** For a product brand everything needed to render exists the moment the site is scraped. For a service brand the assets that make ads *convert* — a real results screenshot, headshot permission, a stated guarantee, unfiltered customer language — only the client can hand over, and the chain otherwise discovers each one missing at render time as a separate blocker. `/ad-onboard` ends by writing a short, literal, **sendable** ask-list (see its Step 5). Pneuma had 12 documented client results sitting unusable behind one missing screenshot; the chain's only response was a red block.
+
+Derived without a founder (cold case study / spec work)? Flag every file `derived, not founder-confirmed`. Never present inference as knowledge. **But always ask the operator once whether they have a line to the brand** — the no-founder path is a default, not a reason to skip the one question that unlocks the proof inventory.
+
+## Tool fallbacks (all validated on the Bloom run — substitute, don't stall)
+MCP servers fail at **session startup**, not call time. Probe one cheap call on Firecrawl + Higgsfield before starting. Trap: `claude mcp list` health-checks fresh connections and reports "Connected" for servers absent from your session — check `~/Library/Caches/claude-cli-nodejs/<project>/mcp-logs-*/` for the session ID instead.
+
+| Stage | Primary | Fallback |
+|---|---|---|
+| Brand scrape | Firecrawl MCP (`branding`+`markdown`+`links`) **+ the site's own stylesheet(s)** (`<link rel=stylesheet>` → curl → `@font-face` src URLs, `:root` tokens, header comment — **outranks `branding` on any disagreement**; The AI Course: `branding` invented a red that isn't on the site, the CSS had the canon and four self-hosted fonts) **+ Shopify `/products.json`** — the JSON is where the price ladder and per-SKU claim data actually live; pull it alongside, not only on failure | `defuddle` CLI + CSS hex/font grep |
+| VoC | interview / Firecrawl | 1) review-widget APIs in page source (Okendo/Yotpo subscriber IDs). 2) **Service brand: at least ONE independent source** (Google reviews, Clutch, G2/Capterra, Trustpilot, LinkedIn recs) before `icp.md` is written — a brand's own testimonial wall is curated and contains zero hesitant or negative language; Pneuma's `icp.md` was built entirely on it in a category where suspicion is the buyer's dominant emotion. If no independent source exists, say so in `icp.md` explicitly. 3) **Client-rendered widget (Bazaarvoice, and any widget whose `config.json` 404s or exposes no passkey) → stop hunting for an API.** Open the page in the browser pane, filter to low-star, extract review DOM nodes (`.bv-content-item` innerText) via `javascript_tool`. Curl and Firecrawl both return nothing here — the content is widget-scoped. Kodiak burned ~6 calls on the documented route before this worked |
+| Ad research | **Named competitor → Apify with the advertiser's Facebook *page URL*** (`curious_coder/facebook-ads-library-scraper`, ~$0.08-0.11/brand). **Category → Ad Library keyword search** (Playwright or Apify search URL) | Ad Library **keyword search matches ad copy, not advertiser names** — "Hook Agency" returned romance serials; `search_type=page` in the URL is silently rewritten to keyword; the advertiser typeahead **does** work when you type into the search box and pick the advertiser (corrected 2026-09-13 — the earlier 'gated, not in the DOM' note was wrong); `search_type=page` in the URL is still rewritten to keyword. Two runs burned ~6 calls each learning this. Don't use keyword search to find a named advertiser |
+| Render | Higgsfield MCP | Gemini REST `gemini-3-pro-image` (same model as `nano_banana_pro`), reference inline base64 |
+
+## Model routing (head-to-head tested)
+| Situation | Model | Why |
+|---|---|---|
+| Packaged goods (bottle/pouch/carton/box) | `nano_banana_pro` default; all three fine | flat/curved printed labels render near-perfectly everywhere |
+| Apparel / draped fabric w/ logo | pick a tradeoff, QA hard | trilemma: `marketing_studio_image` best logo, weakest faces; `gpt_image_2` (high) best faces, logo drifts; `nano_banana_pro` middle. On-model + solid color = reliable; flat-lay/folded + patterned = high risk |
+| People prominent in frame | `gpt_image_2` high or `nano_banana_pro` | face realism; gpt high is slow, no 4:5 (auto→3:4) |
+| Text baked on image | `marketing_studio_image` or `gpt_image_2` | headline typography renders flawlessly on both |
+| **Proxy-subject scene, no reference image** (service brand — the client's world / the outcome / a person) | `nano_banana_pro` (or `gpt_image_2` high if 4:5 isn't needed) | pure text-to-image: **skip `media_import_url` entirely** — there is nothing to be faithful to. Pneuma c08 rendered clean this way; a stricter reading of the mechanics line would have stalled looking for a reference |
+
+**Precedence when a brand hits two rows at once** (Kodiak: CPG cartons *and* a house style with a headline on every static — the table gave no answer): **physical-product fidelity outranks typography.** Principle 5 — a wrong pack is a kill, an off headline is a revise. Route on the product row, put the headline in Block B verbatim. Held on Kodiak: headlines rendered clean on all 9 while routed to the packaged-goods model.
+
+**`show_generations` fallback: filter it.** It returns the account's recent generations across every brand, prompts included — 19 rows of other clients' prompts landed in context on The AI Course. Pass the smallest `limit` that covers the batch and match by prompt + timestamp; don't paste the list.
+
+**Verify what actually served.** `nano_banana_pro` and `nano_banana_2` are distinct models — pro is "ultimate quality, text and diagrams" (tagged `text-rendering`, 2k default); 2 is "fast, next-gen" (no text-rendering tag, 1k default). The Kodiak run requested pro and **the service returned `nano_banana_2` on all 9 jobs**. Read `model` back off each `jobs_wait` response and log `model_requested` + `model_served` in the manifest. Never report the requested model as the one that ran.
+
+Render via **Higgsfield MCP tools** (`media_import_url` *when a reference exists* → `generate_image_batch` → `jobs_wait` → `show_generation_by_ids`) — never the `higgsfield` CLI (separate auth that silently expires) and never interactive higgsfield-* wrapper skills in a loop. **Scenes only** — every type/data/UI/quote format renders through the Playwright path below.
+
+**Call shape (cost three wasted calls on Kodiak — don't rediscover):**
+- `generate_image` nests its arguments under a **`params` object**. Flat args return `Input validation error: params: Invalid input`.
+- **`get_cost: true` goes INSIDE `params` too.** `{params: {model, prompt, aspect_ratio, get_cost: true}}` returns `{cost: {credits: N}}` and submits nothing (verified live 2026-09-04). Passed at the top level it is ignored and **a real job is submitted** — Pneuma's run paid 2 credits for a "preflight". The cost gate works; the call shape is the trap.
+- `jobs_wait` takes **`{jobs: [{index, job_id}]}`** (index = the batch tool's stable index; `timeout_seconds` ≤ 15). `{ids:[…]}` and `{jobs:[{id,type}]}` are rejected. **In some sessions `jobs_wait` and `show_generation_by_ids` expose an empty schema** and reject every shape (the harness stringifies the array). Fallback: `show_generations` (recent list) and reconcile by prompt + timestamp — and note it can omit a just-completed job; a job you were billed for exists even if the list doesn't show it yet. Never resubmit to "find" it.
+- The reference-image role is **`image_references`**.
+- `models_explore` with `action:"get"` takes **`model_id`** — it rejects `query` and `model`.
+- Network drop mid-submit: check `balance` **before** resubmitting. On Kodiak the balance was unchanged, proving nothing was submitted and no double-spend would occur. Verify, don't assume, in either direction.
+- `show_generation_by_ids` is skippable when you download via `curl` and build your own gallery — but say so rather than silently dropping a documented step.
+
+## Render modes — the fork is per FORMAT, not per business type
+Earned 2026-09-03 from 47 real service ads pulled from the Meta Ad Library (research write-up lives in the workshop project, not in this bundle). Product *and* service brands use both modes; a service batch usually mixes them.
+
+| Content of the creative | Path | Why |
+|---|---|---|
+| **A scene** — product, proxy subject (the client's world, the outcome, a person), lifestyle | **Higgsfield** (mode 1) | photography is what diffusion is for |
+| **Type, data, UI, or a quote** — guarantee headline, proof/dashboard card, testimonial, comparison table, notes-app screenshot | **Playwright HTML→PNG** (mode 2) | text renders perfectly, layouts are exact, cost is $0 — and a diffusion model *cannot* credibly produce UI chrome or body text (Kodiak: 8/8 garbled at pack scale) |
+
+**Service brands have a hero.** "No product → nothing to photograph" was wrong: ~28 of 47 real service ads were photographs of a *proxy subject* — a marketing agency running raw phone photos of swimming pools because it sells to pool companies. Angle work decides what the camera points at; the fork only decides which renderer.
+
+**Polish level is taste, not a rule.** Much of the service sample runs deliberately unpolished UGC-style photography. `/ad-research` surfaces that as a category observation, the style pick decides, `rules.md ## Defaults` records it, the wildcard tests against it. Never gate on it, never preset "raw", and it does not transfer to e-comm (polished stays the physical-product default).
+
+### Mode 2 — the renderer
+`.claude/skills/ad-engine/render/` — `render.js` + `templates/` + own `package.json`. Self-contained; no dependency on any other skill. First run: `cd .claude/skills/ad-engine/render && npm run setup`.
+
+```
+node .claude/skills/ad-engine/render/render.js <render-spec.json> --sheet
+```
+`render-spec.json` = `brand` tokens (hex + fonts from `brand-kit.md` → CSS variables) + a `renders[]` list of `{id, template, file, aspect, slots}`. Full contract in `render/README.md`. Every render is verified after the fact (PNG header + exact dimensions) and `render-results.json` carries per-render **warnings** — template QA (`window.__qa()`), clipped text, empty required slots. Read them into the manifest; they are pre-QA flags, not noise.
+
+| Template | Format | Hard rule baked in |
+|---|---|---|
+| `typographic-hero` | guarantee / big-promise headline; primary, paper, ink themes; optional photo bg | headline >12 words is flagged |
+| `proof-card` | big number + **real** screenshot + metrics + named client. Frame: `browser` (default) · **`phone`** (a text-message / app capture — the solo-consultant case) · `none`. Fit: **`contain` by default** — the proof is never cropped (TakeOff's 4:5 crop hid profanity a 9:16 frame exposed); `cover` only by choice | **empty screenshot renders a red "REAL SCREENSHOT REQUIRED" block** — never generate a dashboard; claim check flagged on every render |
+| `testimonial-card` | result headline + `<mark>`-highlighted quote + stars + attributed person | initials avatar when no photo — **never needs a generated face**; authenticity check flagged with the source |
+| `notes-screenshot` | the brand's own pitch as a plain notes-app note (light/dark) | generic phone chrome, no platform marks; claim check flagged |
+| `comparison-table` | them-vs-us / before-vs-after table, highlighted column; paper or ink | every numeric cell listed as a claim; **no source line → flagged cannot ship**; >6 rows flagged |
+| `social-proof-capture` | a **real** post / DM / review framed as the ad | **empty capture renders a red REAL CAPTURE REQUIRED block**; source + permission line required; never fabricates a post |
+| `photo-text-band` | Higgsfield scene + Playwright headline band (the **hybrid** path) | empty photo renders a red PHOTO REQUIRED block; band headline >10 words flagged |
+
+**Aspects:** every template renders at `4:5`, `1:1`, `9:16` (fixture matrix: `render/examples/render-spec.aspects.json`). Batch reviews at 4:5; `/ad-review` produces the 1:1 + 9:16 set for keepers, so Higgsfield credits only go to winners.
+
+**Found-social-proof screenshots (a real Reddit post, a real DM) are REAL CAPTURES ONLY.** The chain may lay one out; it never fabricates the post. Authored plain text (the brand's own words) is `notes-screenshot`; found text is a capture or nothing.
+
+**Style pick for mode-2-heavy brands: render real branded options, don't show competitor screenshots.** Pneuma runs zero ads and its category is ~90% video — there were almost no static competitor creatives to put in a gallery. The run rendered **seven Pneuma-branded mode-2 options** (three grounds × formats) through `render.js` and used those as the style gallery; the operator picked between actual creatives, not other people's. Materially better; now the default for any brand whose formats are mostly type/data/quote. Competitor material still goes in — as **`kind: "reference"` items** (context-only: no Keep/Change/Kill, excluded from counts and export), so a kill on a reference can never be mistaken for a kill on a direction.
+
+**Disclaimer slot is on every template that can state a result** (`typographic-hero`, `testimonial-card`, `proof-card`). Pneuma had to jam "Individual results vary." into `footer`/`source` — that workaround depended on an agent noticing. Fill `disclaimer` whenever a headline or result line carries a number.
+
+**Renderer QA layer (2026-09-06, from TakeOff's "four defects, four clean bills of health"):** `render.js` now checks what a dimension check can't — **OVERFLOW** (text wider than its cell or spilling past its container / off the canvas), **COLLISION** (table cells overlapping), **CROP** (an `object-fit: cover` image losing >10% of an axis — full-bleed backgrounds are exempt via `data-crop-ok`), and **CONTRAST** (every text slot against its real ground, own background first, < 3:1 flagged; skipped over photos). Zero false positives across the 35 fixture renders; true positives on the neon-brand / long-cell / portrait-capture fixture (`render-spec.qa-test.json`). **Derived tokens** handle light primaries: `--brand-on-primary` (ink instead of white when the primary is light), `--brand-primary-text` (ink when the primary can't read on paper), `--brand-accent-on-ink` (white when the accent vanishes on dark). A neon primary now renders readable everywhere and the log says what was substituted. **The contact-sheet eyeball pass is still mandatory** — the checks catch geometry and color, not meaning.
+
+**Accent contrast guard:** `typographic-hero` swaps the `<em>` accent to a readable fallback and emits a warning when accent-vs-ground contrast is < 2.5:1. Pneuma's accent equals its primary; the accent phrase rendered invisibly with **no machine warning** — `data-fit` only sees overflow, not camouflage. Still eyeball every contact sheet; the guard covers the one case we've hit.
+
+**Adding a template:** copy the slot contract (`data-slot`, `data-slot-src`, `data-optional`, `data-default`, `data-fit`), expose `window.__sync()` for post-injection wiring and `window.__qa()` for flags, keep brand values as CSS variables, **never** use a MutationObserver that writes the DOM (self-mutation never settles `load` — cost the first test run). Test-render with a fixture before it enters the table.
+
+### Service compliance floor (write into `rules.md ## Rules` unprompted for any service brand)
+- **Every number on a creative traces to a documented client result** — revenue, client counts, percentages, timeframes. The mode-2 equivalent of Kodiak's protein-claim rule; FTC exposure, not taste.
+- **Never generate a face + a name + a quote together.** That fabricates a person. Real testimonials, real headshots, or the initials avatar.
+- **Never generate a dashboard, analytics view, bank balance, or platform UI showing results.** Real capture or the red block.
+- **"As featured in" logo bars require a real placement.** Forbes/CBS/NBC strips appeared in the sample — never render one unconfirmed.
+- **Results disclaimer** wherever an individual result is shown ("Individual results vary" — the proof card carries it by default).
+- **Real captures go through Meta's policy floor:** profanity masked, names/handles removed unless permitted, checked at every aspect (the 4:5 crop can hide what 9:16 shows). A real asset displayed wrongly is a policy violation, not a fabrication — and the fabrication gates don't catch it.
+
+## QA truths
+*(Read by `brand_type`: product brands take the pack/apparel lines; service brands take the mode-1 service lines + the mode-2 lines. Nobody runs all of it.)*
+- **Text size predicts text failure.** Headlines render flawlessly; small on-pack text is the garble zone ("citamins", "PROTSIN", "STRAWBEDOY LEMONADE", and Kodiak's `PRRK CITY` / `KEEP FROTEN` / `WHOLE GRAING` — all from renders with perfect headlines). Zoom flavor strips, nutrition claims, sub-lines. A big clean headline both converts (won Bloom's A/B 4/4 vs 2/4) and covers the model's weakest area.
+- **Mitigate it in the prompt, don't just detect it.** Block A carries an omit-over-garble instruction (see `/ad-batch` Step 2). Proven on the Kodiak revise; not yet proven across a full batch.
+  - *Open confound:* Kodiak garbled 8/8 — but every job silently served `nano_banana_2` (no `text-rendering` tag) against a requested `nano_banana_pro` (tagged for text and diagrams). **Incidence under a genuine `nano_banana_pro` render is unmeasured.** Do not harden "micro-text always garbles on every model" until a run confirms `model_served == nano_banana_pro`. Principle 7 applies to model findings too.
+- **Contact sheet, then zoom — not "read every image full-size."** Full-size reads of a 9×1856×2304 batch are unaffordable and *less* accurate. Build one contact sheet, then targeted ~1300px crops of pack/logo/claim regions. On Kodiak this caught a **mirrored brand mark** and a **wrong net weight (298g vs 280g)** that a naive full-size skim would plausibly have missed.
+- **Verify every download.** `curl -sSLo` exits 0 on a silently truncated file — a Kodiak image landed at 3.1MB against a real 7.0MB and was only caught when PIL threw `image file is truncated`. Check the byte count against `Content-Length`, or open each file once before it reaches the gallery. An unverified download ships a corrupt asset.
+- **Mode-2 renders have their own QA lines, not the pack ones:** (1) every number traced (claim check), (2) every quote attributed with a source, (3) real screenshot present (the template makes absence impossible to miss), (4) nothing clipped — `render-results.json` reports it, (5) brand tokens actually applied (a default-blue hero on a non-blue brand means `brand-kit.md` is missing hex values). Zoom the disclaimer and source lines like you'd zoom a flavor strip.
+- **Mode-1 *service* renders (proxy-subject scenes) have their own lines too, not the pack ones:** no invented signage, storefront names, screens, or lettering anywhere in frame (Block A forbids it — verify it); hands, faces, teeth; nothing that reads as a fabricated client; polish level matches `## Default visual style`. Pneuma fell back to "generic image QA" because these weren't written down.
+- **Pack silhouette/geometry is its own check** — a flat box rendered as a gable-top carton passes every text check and is still wrong.
+- **Exact colorway fidelity drifts on every model.** Manual QA line; never promise exact-SKU accuracy.
+- Category calibration: packaged goods = light verify; apparel/draped = mandatory zoom on the logo region.
+
+## Field notes
+- Category style norms are real but not universal — apparel converged across 4 brands; snacks split into two valid styles; hydration/supplements ran ~0% designed statics (dynamic catalog + video) and text-on-image statics still won. A zero-statics category is **white space to test into, not a prohibition**.
+- A brand running zero Meta ads (page transparency: "This Page isn't currently running ads") is a finding — growth may be TikTok/influencer/retail.
+- When two plausible styles survive research, A/B them inside one batch (half each) and let the review decide.
+- Multi-panel composites (diptych/triptych) read as "AI ad design" — no real advertiser tested ran them. Default single composition.
+- `gpt_image_2` quality-high is slow — hero shots, not volume.
+- Compliance floor by category (write into rules.md unprompted): food/supplements → on-pack facts only, no unsubstantiated health claims; licensed marks (collegiate, characters) → never generate unconfirmed; all → never fabricate testimonials, review counts, endorsements.
+- Cost: preflight `get_cost:true` × count; >100 credits or >10% of `balance` → explicit go-ahead. Under that, state the number and proceed.
+
+## Gallery (shared UI — both style pick and review)
+Template: `.claude/skills/ad-engine/templates/gallery.html`. Skill Atlas skin (#F5F5F7/#1D1D1F, SF Pro stack) + #173EF5 community accent; apple-design motion pass (in-place updates, origin-anchored lightbox, reduced-motion) — don't regress either when editing. Fill `{{GALLERY_DATA}}` with `{"campaign","mode":"style"|"review","title","items":[{"id","src","label","meta"}]}`, write next to the images so relative `src` paths resolve, `open` it. Export button copies JSON the user pastes back. Three review states: keep / revise (note required) / kill (note becomes a rule).
+
+## Connects to
+`ad-copy` (the copy pass inside `/ad-batch` — ships with the chain; self-contained digest, does **not** depend on `direct-response-copy`), `brand-kit-builder` (scrape), `meta-ads-analyst` (deep teardown), `positioning-angles` + `direct-response-copy` (deep frameworks, Zach's, not bundled), `ad-predictor` (pre-spend scoring), `higgsfield-product-photoshoot` / `higgsfield-soul-id` (specialized renders). Supersedes legacy `ad-creative` + `ad-research-pipeline`.

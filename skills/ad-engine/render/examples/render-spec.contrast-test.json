@@ -1,0 +1,32 @@
+{
+  "campaign": "contrast-guard-test",
+  "output_dir": "out",
+  "brand": {
+    "name": "Northwind",
+    "primary": "#0B5FFF",
+    "accent": "#0B5FFF",
+    "ink": "#0E0F14",
+    "paper": "#FFFFFF",
+    "muted": "#6B7280",
+    "font_display": "Sora",
+    "font_body": "Inter",
+    "google_fonts": [
+      "Sora:wght@600;700;800"
+    ]
+  },
+  "renders": [
+    {
+      "id": "c10",
+      "template": "typographic-hero",
+      "file": "c10-hero-accent-eq-primary.png",
+      "aspect": "4:5",
+      "slots": {
+        "eyebrow": "Contrast guard test",
+        "headline": "Your website should be a salesperson, <em>not a brochure.</em>",
+        "subhead": "This fixture overrides accent to equal primary \u2014 the <em> phrase must still be readable.",
+        "cta": "Book a call",
+        "disclaimer": "Individual results vary."
+      }
+    }
+  ]
+}

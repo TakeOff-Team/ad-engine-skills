@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+  ad-engine / render / photo-text-band.html
+  FORMAT 8 — Photo + text band. A full-bleed photo (Higgsfield render, or a real photo) with a solid
+  headline band. The HYBRID path: render the scene first, then pass its PNG into `photo` here.
+  Canvas: 1080×1350 default; scales to 1:1 and 9:16 (photo area flexes, band stays fixed-height).
+
+  HARD RULE: no photo → red "PHOTO REQUIRED" block. The band never ships over an empty frame.
+
+  SLOTS
+    photo        (img src) the scene — local file path from the Higgsfield download, or a real photo
+    eyebrow      (optional) pill in the top corner over the photo
+    headline     the band headline — 3–8 words; <em> for the accent phrase
+    subhead      (optional) one line under the headline in the band
+    cta          (optional)
+    band         (optional) "bottom" (default) | "top"
+    band-theme   (optional) "" primary | "ink" | "paper"
+    disclaimer   (optional) tiny line at the very bottom of the band
+    brand-name / logo  injected from spec.brand (shown in the band)
+-->
+<style>
+  :root{ --brand-primary:#173EF5; --brand-accent:#FFB800; --brand-ink:#111111; --brand-paper:#FFFFFF; --brand-muted:#6B6B73;
+         --font-display:Inter,system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100vw;height:100vh;overflow:hidden}
+  body{background:var(--brand-ink);color:#fff;font-family:var(--font-body)}
+  .frame{height:100%;display:flex;flex-direction:column}
+  .frame.band-top{flex-direction:column-reverse}
+  .photo{flex:1;min-height:0;position:relative;overflow:hidden;background:#222}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo img[src=""],.photo img:not([src]){display:none}
+  .missing{position:absolute;inset:0;display:none;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;padding:60px;
+           background:repeating-linear-gradient(45deg,#3a0d0d 0 24px,#520f0f 24px 48px);color:#fff;font-weight:900;font-family:var(--font-display);font-size:48px;line-height:1.15}
+  .photo.no-photo .missing{display:flex}
+  .eyebrow{font-family:var(--font-mono,var(--font-body));position:absolute;top:44px;left:48px;font-size:20px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:12px 18px;border-radius:999px;
+           background:rgba(0,0,0,.45);border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(6px)}
+  .frame.band-top .eyebrow{top:auto;bottom:44px}
+
+  .band{flex-shrink:0;padding:48px 56px 44px;background:var(--brand-primary);color:var(--brand-on-primary,#fff);display:flex;flex-direction:column;gap:14px}
+  .band.ink{background:var(--brand-ink)} .band.paper{background:var(--brand-paper);color:var(--brand-ink)}
+  .band-top-row{display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:800;font-size:26px;opacity:.95}
+  .brand img{height:44px;width:auto;max-width:220px}
+  .brand img[src=""],.brand img:not([src]){display:none}
+  .headline-box{height:190px;display:flex;align-items:flex-end}
+  .headline{font-family:var(--font-display);font-weight:900;font-size:72px;line-height:var(--display-lh,1);letter-spacing:-.035em;text-wrap:balance;width:100%}
+  .headline em{font-style:normal;color:var(--brand-accent)}
+  .band.ink .headline em{color:var(--brand-accent-on-ink,var(--brand-accent))}
+  .band.paper .headline em{color:var(--brand-primary-text,var(--brand-primary))}
+  .band.em-fallback .headline em{color:var(--brand-on-primary,#fff)}
+  .band.ink.em-fallback .headline em{color:#fff}
+  .band.paper.em-fallback .headline em{color:var(--brand-ink)}
+  .subhead{font-size:28px;line-height:1.3;opacity:.92;max-width:900px}
+  .bottom-row{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:6px}
+  .cta{font-family:var(--font-display);font-weight:800;font-size:26px;padding:18px 26px;border-radius:14px;background:var(--brand-on-primary,#fff);color:var(--brand-primary);white-space:nowrap}
+  .cta::after{content:" →"}
+  .band.ink .cta{background:var(--brand-accent);color:var(--brand-ink)} .band.paper .cta{background:var(--brand-primary);color:var(--brand-on-primary,#fff)}
+  .disclaimer{font-size:16px;opacity:.65}
+/* scale pass — The AI Course review 2026-09-13 */ .headline-box{height:auto;min-height:190px} .headline{font-size:108px} .subhead{font-size:40px} .cta{font-size:36px;padding:24px 36px;border-radius:18px}
+/* display scale — brand.display_scale */ .headline{font-size:calc(108px * var(--display-scale,1))}
+</style>
+</head>
+<body>
+<div class="frame" id="frame">
+  <div class="photo" id="photo">
+    <img data-slot-src="photo" data-optional data-crop-ok alt="">
+    <div class="missing"><div>PHOTO REQUIRED</div><div style="font-size:24px;font-weight:600;opacity:.85;max-width:720px">Hybrid format: render the scene through Higgsfield first (or use a real photo), then pass the file into the `photo` slot.</div></div>
+    <div class="eyebrow" data-slot="eyebrow" data-optional>For service businesses</div>
+  </div>
+  <div class="band" id="band">
+    <div class="band-top-row"><div class="brand"><img data-slot-src="logo" data-optional alt=""><span data-slot="brand-name" data-optional>Brand</span></div></div>
+    <div class="headline-box"><h1 class="headline" data-slot="headline" data-fit data-fit-min="40">Stop renting leads. <em>Own the phone call.</em></h1></div>
+    <p class="subhead" data-slot="subhead" data-optional>One supporting line in the band.</p>
+    <div class="bottom-row"><div class="cta" data-slot="cta" data-optional>Book a call</div><div class="disclaimer" data-slot="disclaimer" data-optional>Individual results vary.</div></div>
+  </div>
+</div>
+<span data-slot="band" data-optional hidden></span>
+<span data-slot="band-theme" data-optional hidden></span>
+<script>
+  const sync = () => {
+    const pos = ((document.querySelector('[data-slot="band"]')||{}).textContent || '').trim();
+    document.getElementById('frame').classList.toggle('band-top', pos === 'top');
+    const bt = ((document.querySelector('[data-slot="band-theme"]')||{}).textContent || '').trim();
+    const band = document.getElementById('band'); band.className = 'band' + (bt ? ' ' + bt : '');
+    const img = document.querySelector('#photo img');
+    document.getElementById('photo').classList.toggle('no-photo', !(img && img.getAttribute('src')));
+  };
+  // accent contrast guard (ported from typographic-hero): blue <em> on a blue band rendered invisible on The AI Course c10
+  function lum(hex){ const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||'').trim()); if(!m) return null;
+    const c=[0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
+    return .2126*c[0]+.7152*c[1]+.0722*c[2]; }
+  function contrast(a,b){ const la=lum(a), lb=lum(b); if(la==null||lb==null) return null; const [h,l]=la>lb?[la,lb]:[lb,la]; return (h+.05)/(l+.05); }
+  let emContrast = null;
+  function guardEm(){
+    const cs=getComputedStyle(document.documentElement); const band=document.getElementById('band');
+    const ground = band.classList.contains('paper') ? cs.getPropertyValue('--brand-paper') : band.classList.contains('ink') ? cs.getPropertyValue('--brand-ink') : cs.getPropertyValue('--brand-primary');
+    const emHex = band.classList.contains('paper') ? cs.getPropertyValue('--brand-primary') : cs.getPropertyValue('--brand-accent');
+    emContrast = contrast(emHex, ground);
+    band.classList.toggle('em-fallback', emContrast != null && emContrast < 2.5);
+  }
+  const _sync = sync; window.__sync = () => { _sync(); guardEm(); }; window.__sync();
+  window.__qa = function(){
+    const flags = [];
+    if (document.getElementById('photo').classList.contains('no-photo')) flags.push('PHOTO-TEXT BAND WITHOUT A PHOTO — cannot ship. Render the scene first (Higgsfield) and pass the file in.');
+    if (document.querySelector('.headline em') && emContrast != null && emContrast < 2.5) flags.push(`accent phrase contrast ${emContrast.toFixed(1)}:1 on the band — swapped to a readable fallback; check the render`);
+    const h = document.querySelector('.headline').textContent.trim().split(/\s+/).length;
+    if (h > 10) flags.push(`band headline is ${h} words — the band is short; keep it to 3–8`);
+    return flags;
+  };
+</script>
+</body>
+</html>

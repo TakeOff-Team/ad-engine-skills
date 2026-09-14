@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+  ad-engine / render / proof-card.html
+  FORMAT 3 — Result / dashboard proof card. Big number + REAL screenshot + named client.
+  Canvas: 1080×1350 (4:5)
+
+  HARD RULE (enforced visually): the screenshot slot must be a REAL capture supplied by the client.
+  If it is empty the template renders a red "REAL SCREENSHOT REQUIRED" block and window.__qa()
+  flags it — the card cannot ship looking finished without evidence.
+
+  SLOTS
+    eyebrow        (optional) "CLIENT SUCCESS STORY"
+    big-number     the headline result — "$124.4K"
+    big-label      what the number is — "in Amazon sales, 30 days"
+    screenshot     (img src) REAL dashboard / analytics / results capture
+    fit            (optional) "contain" (default — the proof is never cropped) | "cover"
+    frame          (optional) "browser" (default) | "phone" (a text-message / app capture) | "none"
+    screenshot-caption (optional) tiny caption under the frame — "Seller Central, Aug 1–30"
+    metric-1-value / metric-1-label   (optional) up to three small metric chips
+    metric-2-value / metric-2-label
+    metric-3-value / metric-3-label
+    client-photo   (optional, img src) REAL headshot; initials avatar shown when absent
+    client-initials(optional) fallback avatar text — "CO"
+    client-name    "Cesar Oswaldo"
+    client-role    (optional) "Propstech client · Amazon seller"
+    cta            (optional) "Build your success story"
+    disclaimer     (optional) "Individual results vary." — default provided
+    brand-name / logo   injected from spec.brand
+  CSS VARS  --brand-primary --brand-accent --brand-ink --brand-paper --brand-muted --font-display --font-body
+-->
+<style>
+  :root{ --brand-primary:#173EF5; --brand-accent:#FFB800; --brand-ink:#111111; --brand-paper:#FFFFFF; --brand-muted:#6B6B73;
+         --font-display:Inter,system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100vw;height:100vh;overflow:hidden}
+  body{background:var(--brand-ink);color:#fff;font-family:var(--font-body);position:relative}
+  body::before{content:"";position:absolute;inset:0;background:
+     radial-gradient(900px 600px at 15% 0%,color-mix(in srgb,var(--brand-primary) 55%,transparent),transparent 60%),
+     radial-gradient(700px 500px at 100% 100%,color-mix(in srgb,var(--brand-accent) 30%,transparent),transparent 60%);}
+  .frame{position:relative;height:100%;padding:clamp(40px,4.2vh,56px) 60px clamp(36px,3.9vh,52px);display:flex;flex-direction:column;gap:clamp(16px,2vh,26px)}
+
+  .top{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
+  .brand img{height:48px;width:auto;max-width:240px}
+  .brand img[src=""],.brand img:not([src]){display:none}
+  .eyebrow{font-family:var(--font-mono,var(--font-body));font-size:19px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:10px 16px;border-radius:999px;
+           background:rgba(255,255,255,.10);border:1.5px solid rgba(255,255,255,.28)}
+
+  .hero{display:flex;flex-direction:column;gap:6px}
+  .big-number{font-family:var(--font-display);font-weight:900;font-size:clamp(88px,11vh,150px);line-height:.95;letter-spacing:-.045em;color:var(--brand-accent-on-ink,var(--brand-accent));white-space:nowrap}
+  .big-label{font-size:clamp(26px,2.6vh,34px);font-weight:600;opacity:.92;letter-spacing:-.01em}
+
+  .shot{position:relative;border-radius:22px;overflow:hidden;background:#0d0d10;border:1.5px solid rgba(255,255,255,.18);
+        box-shadow:0 30px 60px rgba(0,0,0,.45);flex:1;min-height:300px;display:flex;flex-direction:column}
+  .chrome{height:44px;background:#1b1b20;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+  .chrome i{width:12px;height:12px;border-radius:50%;background:#3a3a42;display:block}
+  .chrome i:nth-child(1){background:#ff5f57}.chrome i:nth-child(2){background:#febc2e}.chrome i:nth-child(3){background:#28c840}
+  .shot img{flex:1;min-height:0;width:100%;object-fit:contain;object-position:top;display:block;background:#0d0d10}
+  .shot.fit-cover img{object-fit:cover}
+  .shot.frame-phone{width:min(100%,520px);margin:0 auto;border-radius:44px;border:8px solid #2a2a30}
+  .shot.frame-phone .chrome{height:34px;background:#0d0d10;justify-content:center;border-bottom:none}
+  .shot.frame-phone .chrome i{width:120px;height:8px;border-radius:999px;background:#2a2a30}
+  .shot.frame-phone .chrome i:nth-child(2),.shot.frame-phone .chrome i:nth-child(3){display:none}
+  .shot.frame-none .chrome{display:none}
+  .shot img[src=""],.shot img:not([src]){display:none}
+  .missing{flex:1;display:none;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;padding:40px;
+           background:repeating-linear-gradient(45deg,#3a0d0d 0 24px,#520f0f 24px 48px);color:#fff;font-weight:900;
+           font-family:var(--font-display);font-size:44px;line-height:1.15;letter-spacing:-.01em}
+  .shot.no-shot .missing{display:flex}
+  .shot-caption{font-size:19px;opacity:.7;padding:10px 16px 12px;flex-shrink:0}
+
+  .metrics{display:flex;gap:14px}
+  .metric{flex:1;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.16);border-radius:16px;padding:16px 18px}
+  .metric b{display:block;font-family:var(--font-display);font-weight:800;font-size:clamp(28px,2.9vh,38px);letter-spacing:-.02em;line-height:1.05}
+  .metric span{display:block;font-size:19px;opacity:.75;margin-top:4px}
+
+  .client{display:flex;align-items:center;gap:18px}
+  .avatar{width:84px;height:84px;border-radius:50%;overflow:hidden;background:var(--brand-primary);color:var(--brand-on-primary,#fff);display:flex;align-items:center;justify-content:center;
+          font-family:var(--font-display);font-weight:800;font-size:32px;border:3px solid rgba(255,255,255,.35);flex-shrink:0}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .avatar img[src=""],.avatar img:not([src]){display:none}
+  .avatar.has-photo span{display:none}
+  .who b{display:block;font-family:var(--font-display);font-weight:800;font-size:30px;letter-spacing:-.01em}
+  .who span{display:block;font-size:22px;opacity:.75;margin-top:2px}
+  .cta{margin-left:auto;font-family:var(--font-display);font-weight:800;font-size:26px;padding:20px 28px;border-radius:16px;background:var(--brand-accent-on-ink,var(--brand-accent));color:var(--brand-ink);white-space:nowrap}
+  .cta::after{content:" →"}
+  .disclaimer{font-size:17px;opacity:.55;text-align:center;letter-spacing:.01em}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="top">
+    <div class="brand"><img data-slot-src="logo" data-optional alt=""><span data-slot="brand-name" data-optional>Brand</span></div>
+    <div class="eyebrow" data-slot="eyebrow" data-optional>Client success story</div>
+  </div>
+
+  <div class="hero">
+    <div class="big-number" data-slot="big-number" data-fit data-fit-min="84">$124.4K</div>
+    <div class="big-label" data-slot="big-label">what the number is, and over what period</div>
+  </div>
+
+  <div class="shot" id="shot">
+    <div class="chrome"><i></i><i></i><i></i></div>
+    <img data-slot-src="screenshot" data-optional alt="">
+    <div class="missing"><div>REAL SCREENSHOT REQUIRED</div><div style="font-size:24px;font-weight:600;opacity:.85;max-width:720px">Never generate a dashboard. Supply a real capture from the client.</div></div>
+    <div class="shot-caption" data-slot="screenshot-caption" data-optional>Source and date range of the capture</div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><b data-slot="metric-1-value" data-optional>—</b><span data-slot="metric-1-label" data-optional>metric</span></div>
+    <div class="metric"><b data-slot="metric-2-value" data-optional>—</b><span data-slot="metric-2-label" data-optional>metric</span></div>
+    <div class="metric"><b data-slot="metric-3-value" data-optional>—</b><span data-slot="metric-3-label" data-optional>metric</span></div>
+  </div>
+
+  <div class="client">
+    <div class="avatar" id="avatar"><img data-slot-src="client-photo" data-optional alt=""><span data-slot="client-initials" data-optional>CL</span></div>
+    <div class="who"><b data-slot="client-name">Client name</b><span data-slot="client-role" data-optional>Client role · context</span></div>
+    <div class="cta" data-slot="cta" data-optional>Build your success story</div>
+  </div>
+
+  <div class="disclaimer" data-slot="disclaimer" data-default>Individual results vary. Real client, real data, shared with permission.</div>
+</div>
+<span data-slot="fit" data-optional hidden></span>
+<span data-slot="frame" data-optional hidden></span>
+
+<script>
+  const sync = () => {
+    const shot = document.querySelector('#shot img');
+    const shotEl = document.getElementById('shot');
+    shotEl.classList.toggle('no-shot', !(shot && shot.getAttribute('src')));
+    const fit = ((document.querySelector('[data-slot="fit"]')||{}).textContent || '').trim();
+    shotEl.classList.toggle('fit-cover', fit === 'cover');
+    const frame = ((document.querySelector('[data-slot="frame"]')||{}).textContent || '').trim();
+    shotEl.classList.remove('frame-phone','frame-none'); if (frame === 'phone' || frame === 'none') shotEl.classList.add('frame-' + frame);
+    const ph = document.querySelector('#avatar img');
+    document.getElementById('avatar').classList.toggle('has-photo', !!(ph && ph.getAttribute('src')));
+    // hide metric cards whose value is empty
+    document.querySelectorAll('.metric').forEach(m => { const b = m.querySelector('b'); m.style.display = (b.style.display === 'none' || !b.textContent.trim() || b.textContent.trim()==='—') ? 'none' : ''; });
+  };
+  window.__sync = sync; sync();
+  window.__qa = function(){
+    const flags = [];
+    if (document.getElementById('shot').classList.contains('no-shot')) flags.push('PROOF CARD WITHOUT A REAL SCREENSHOT — cannot ship. Supply a real capture; never generate one.');
+    const n = document.querySelector('.big-number').textContent.trim();
+    if (!/[\d]/.test(n)) flags.push('big-number contains no digits');
+    flags.push(`CLAIM CHECK: "${n}" must trace to a documented client result before this ships (rules.md).`);
+    return flags;
+  };
+</script>
+</body>
+</html>

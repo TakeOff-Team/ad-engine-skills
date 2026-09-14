@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+  ad-engine / render / notes-screenshot.html
+  FORMAT 7 — Authored plain-text "notes app" screenshot. The pitch typed out, no design.
+  Canvas: 1080×1350 (4:5). Generic phone-notes look — no platform marks, no logos.
+
+  This is the brand's OWN words presented as a note. It is not a fake post from someone else —
+  found-social-proof (format 6) uses REAL captures only, never this template.
+
+  SLOTS
+    title     first line of the note (bold) — "AI agencies:"
+    body      the note body; paragraphs as <p>…</p>; supports <b> and <i>
+    time      (optional) status-bar time — default "9:41"
+    date      (optional) note date line — "September 4, 2026 at 9:41 AM"
+    theme     (optional) "" (light) | "dark"
+  CSS VARS  --font-body (system-ui by default — a note should look like a note, not a brand)
+-->
+<style>
+  :root{ --brand-primary:#173EF5; --brand-accent:#FFB800; --brand-ink:#111111; --brand-paper:#FFFFFF; --font-body:-apple-system,system-ui,Inter,sans-serif; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100vw;height:100vh;overflow:hidden}
+  body{background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Inter,sans-serif;color:#1C1C1E;position:relative}
+  .phone{position:absolute;inset:0;background:#FFF;display:flex;flex-direction:column}
+  body.theme-dark .phone{background:#1C1C1E;color:#F2F2F7}
+
+  .status{height:88px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 54px 12px;font-weight:600;font-size:30px;letter-spacing:-.01em}
+  .status .right{display:flex;align-items:center;gap:12px}
+  .sig{display:flex;align-items:flex-end;gap:3px;height:22px}.sig i{width:6px;background:currentColor;border-radius:1px;display:block}
+  .sig i:nth-child(1){height:8px}.sig i:nth-child(2){height:12px}.sig i:nth-child(3){height:16px}.sig i:nth-child(4){height:20px}
+  .wifi{width:26px;height:20px;border:3px solid currentColor;border-color:currentColor transparent transparent transparent;border-radius:50% 50% 0 0;position:relative;top:4px}
+  .batt{width:48px;height:24px;border:3px solid currentColor;border-radius:7px;position:relative;opacity:.9}
+  .batt::before{content:"";position:absolute;left:3px;top:3px;bottom:3px;width:32px;background:currentColor;border-radius:3px}
+  .batt::after{content:"";position:absolute;right:-8px;top:7px;width:4px;height:10px;background:currentColor;border-radius:0 2px 2px 0}
+
+  .nav{height:84px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;color:#E5A00D;font-size:32px}
+  .nav .back{display:flex;align-items:center;gap:10px}
+  .nav .back::before{content:"‹";font-size:56px;line-height:1;position:relative;top:-3px}
+  .nav .actions{display:flex;gap:34px;align-items:center}
+  .nav .actions i{width:34px;height:34px;display:block;border:3px solid #E5A00D;border-radius:6px;opacity:.9}
+  .nav .actions i.dots{border:none;position:relative;width:40px}
+  .nav .actions i.dots::before{content:"•••";position:absolute;left:0;top:-18px;font-size:34px;letter-spacing:2px;font-weight:900}
+  .nav .done{font-weight:700}
+
+  .note{flex:1;min-height:0;padding:14px 54px 40px;display:flex;flex-direction:column}
+  .date{font-size:22px;color:#8E8E93;text-align:center;margin-bottom:22px}
+  .title{font-weight:800;font-size:84px;letter-spacing:-.02em;line-height:1.15;margin-bottom:26px}
+  .body{font-size:44px;line-height:1.36;letter-spacing:-.005em;flex:1;min-height:0}
+  .body p{margin:0 0 30px}
+  .body p:last-child{margin-bottom:0}
+  .body b{font-weight:700}
+
+  .tools{height:96px;border-top:1px solid #E5E5EA;display:flex;align-items:center;justify-content:space-around;padding:0 60px;color:#E5A00D}
+  body.theme-dark .tools{border-color:#3A3A3C}
+  .tools i{display:block;width:38px;height:38px;border:3px solid currentColor;border-radius:8px;opacity:.9}
+  .tools i.circle{border-radius:50%}.tools i.pen{border-radius:4px;transform:rotate(45deg);width:14px;height:44px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status"><span data-slot="time" data-optional>9:41</span><span class="right"><span class="sig"><i></i><i></i><i></i><i></i></span><span class="wifi"></span><span class="batt"></span></span></div>
+  <div class="nav"><span class="back">Notes</span><span class="actions"><i class="dots"></i><i></i><span class="done">Done</span></span></div>
+  <div class="note">
+    <div class="date" data-slot="date" data-optional>Today at 9:41 AM</div>
+    <div class="title" data-slot="title" data-fit data-fit-min="36">Title of the note</div>
+    <div class="body" data-slot="body" data-fit data-fit-min="26"><p>The body of the note. Type the pitch the way you'd type it to one person.</p><p>Short paragraphs. Plain words.</p></div>
+  </div>
+  <div class="tools"><i class="circle"></i><i></i><i class="pen"></i><i></i></div>
+</div>
+<span data-slot="theme" data-optional hidden></span>
+<script>
+  const sync = () => {
+    const theme = ((document.querySelector('[data-slot="theme"]')||{}).textContent || '').trim();
+    const cls = theme ? 'theme-' + theme : '';
+    if (document.body.className !== cls) document.body.className = cls;
+  };
+  window.__sync = sync; sync();
+  window.__qa = function(){
+    const flags = [];
+    const words = document.querySelector('.body').textContent.trim().split(/\s+/).length;
+    if (words > 140) flags.push(`note body is ${words} words — the format works because it is scannable; trim toward 60–110`);
+    flags.push('CLAIM CHECK: any number or guarantee typed in the note must trace to a documented result (rules.md).');
+    return flags;
+  };
+</script>
+</body>
+</html>

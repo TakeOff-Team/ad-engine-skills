@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ad Engine — Gallery</title>
+<style>
+  /* Skin: Skill Atlas design system (skill-atlas-preview.vercel.app — SF Pro stack,
+     #F5F5F7 canvas, #1D1D1F ink, hairline borders, white segmented controls,
+     pastel pill badges) with The AI Course electric blue #173EF5 kept as the
+     community accent. Motion per apple-design skill: pointer-down feedback,
+     in-place state changes, origin-anchored lightbox, reduced-motion support. */
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#1D1D1F; --dim:#48484A; --faint:#AEAEB2; --ghost:#C7C7CC;
+    --line:rgba(0,0,0,.08); --hairline:rgba(0,0,0,.06);
+    --accent:#173EF5; --accent-soft:#EAF0FF;
+    --keep:#0E9F6E; --keep-soft:#E4F6EE; --revise:#C77700; --revise-soft:#FFF3DF; --kill:#C0392B; --kill-soft:#FDEAE7;
+    --seg-shadow:0 1px 4px rgba(0,0,0,.1), 0 0 1px rgba(0,0,0,.08);
+    --card-shadow:0 1px 4px rgba(0,0,0,.05);
+    --lift:0 6px 20px rgba(0,0,0,.09);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"system-ui","SF Pro Text",Inter,system-ui,sans-serif;padding-bottom:92px;-webkit-font-smoothing:antialiased}
+  header{position:sticky;top:0;z-index:50;background:rgba(245,245,247,.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  h1 .preview{font-size:9px;font-weight:600;letter-spacing:1.26px;text-transform:uppercase;color:var(--faint);margin-left:8px}
+  .mode{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 11px}
+  .counts{margin-left:auto;display:flex;gap:14px;font-size:12px;color:var(--faint);align-items:center}
+  .counts b{color:var(--ink);font-weight:600}
+  .counts span{display:flex;align-items:center;gap:5px}
+  .counts i{width:6px;height:6px;border-radius:999px;display:inline-block;background:var(--ghost)}
+  .counts .k i{background:var(--keep)} .counts .r i{background:var(--revise)} .counts .x i{background:var(--kill)}
+  .filters{display:inline-flex;gap:0;padding:2px;background:rgba(0,0,0,.05);border-radius:9px;margin:16px 24px 0}
+  .filters button{background:transparent;border:none;color:var(--dim);border-radius:7px;padding:5px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:transform 100ms ease-out,color 150ms ease-out}
+  .filters button:active{transform:scale(.96)}
+  .filters button.active{color:var(--ink);background:#fff;box-shadow:var(--seg-shadow)}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:16px 24px}
+  .card{background:var(--card);border:1px solid var(--hairline);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--card-shadow);transition:border-color 180ms ease-out,box-shadow 180ms ease-out,opacity 160ms ease-out,transform 160ms ease-out}
+  .card:hover{box-shadow:var(--lift)}
+  .card.enter{animation:cardIn 220ms cubic-bezier(.2,.9,.25,1) both;animation-delay:var(--d,0ms)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .card.leaving{opacity:0;transform:scale(.97)}
+  .card.keep{border-color:var(--keep);box-shadow:0 0 0 1px var(--keep), var(--card-shadow)}
+  .card.revise{border-color:var(--revise);box-shadow:0 0 0 1px var(--revise), var(--card-shadow)}
+  .card.kill{border-color:var(--kill);box-shadow:0 0 0 1px var(--kill), var(--card-shadow);opacity:.55}
+  .imgwrap{position:relative;cursor:zoom-in;background:var(--bg);border-bottom:1px solid var(--hairline)}
+  .imgwrap img{width:100%;display:block;aspect-ratio:4/5;object-fit:contain}
+  .status{position:absolute;top:10px;left:10px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;display:none;box-shadow:var(--seg-shadow)}
+  .card.keep .status,.card.revise .status,.card.kill .status{display:block;animation:pop 180ms cubic-bezier(.34,1.3,.5,1) both}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  .card.keep .status{background:var(--keep-soft);color:var(--keep)}
+  .card.revise .status{background:var(--revise-soft);color:var(--revise)}
+  .card.kill .status{background:var(--kill-soft);color:var(--kill)}
+  .card.keep .status::after{content:"Keep"} .card.revise .status::after{content:"Change"} .card.kill .status::after{content:"Kill"}
+  .body{padding:13px 15px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .label{font-size:13.5px;font-weight:600;letter-spacing:-.005em}
+  .label .id{color:var(--faint);font-weight:400}
+  .meta{font-size:12px;color:#8A6D1A;background:#FDF7E7;border:1px solid rgba(0,0,0,.04);border-radius:8px;padding:7px 9px;line-height:1.45}
+  .meta:empty{display:none}
+  /* kind:"reference" — context-only items (competitor ads, research screenshots). No decision verbs, excluded from counts + export. */
+  .card.ref{border-style:dashed;opacity:.92}
+  .card.ref .actions,.card.ref textarea,.card.ref .noteflag,.card.ref .status{display:none}
+  .card.ref .refbadge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6E6E73;background:#EDEDF0;border-radius:6px;padding:4px 8px;margin-bottom:8px}
+  .refbadge{display:none}
+  /* blocking renderer flags (cannot ship without an override) — from item.blocking[] */
+  .blockbadge{display:none;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--kill);border-radius:6px;padding:4px 8px;margin-bottom:8px}
+  .card.blocked .blockbadge{display:inline-block}
+  .card.blocked .imgwrap{outline:3px solid var(--kill);outline-offset:-3px}
+  .actions{display:flex;gap:7px}
+  .actions button{flex:1;padding:7px 0;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--dim);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:transform 100ms ease-out,background 150ms ease-out,color 150ms ease-out,border-color 150ms ease-out}
+  .actions button:active{transform:scale(.95)}
+  .actions .bk:hover,.card.keep .bk{background:var(--keep-soft);color:var(--keep);border-color:var(--keep)}
+  .actions .br:hover,.card.revise .br{background:var(--revise-soft);color:var(--revise);border-color:var(--revise)}
+  .actions .bx:hover,.card.kill .bx{background:var(--kill-soft);color:var(--kill);border-color:var(--kill)}
+  textarea{width:100%;background:var(--bg);border:1px solid var(--hairline);border-radius:8px;color:var(--ink);padding:8px 10px;font:12.5px/1.4 inherit;font-family:inherit;resize:vertical;min-height:38px}
+  textarea::placeholder{color:var(--faint)}
+  textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;background:#fff}
+  textarea.needs{border-color:var(--revise);background:var(--revise-soft)}
+  textarea.needs::placeholder{color:var(--revise);opacity:.85}
+  .noteflag{display:none;font-size:11px;font-weight:500;color:var(--revise);margin-top:-4px}
+  .card.revise .noteflag.show{display:block}
+  footer{position:fixed;bottom:0;left:0;right:0;background:rgba(245,245,247,.85);backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:16px}
+  footer .hint{font-size:12px;color:var(--faint)}
+  footer .hint b{color:var(--dim);font-weight:600}
+  #export{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:10px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(23,62,245,.3);transition:transform 100ms ease-out,box-shadow 150ms ease-out}
+  #export::before{content:"";width:7px;height:7px;border-radius:999px;background:#7FF2C0}
+  #export:hover{box-shadow:0 6px 18px rgba(23,62,245,.38)}
+  #export:active{transform:scale(.97)}
+  #export.done{background:var(--keep);box-shadow:0 4px 14px rgba(14,159,110,.3)}
+  #fallback{display:none;position:fixed;inset:0;background:rgba(29,29,31,.4);backdrop-filter:blur(6px);z-index:100;padding:8vh 10vw}
+  #fallback .box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;max-height:80vh;display:flex;flex-direction:column;gap:12px;box-shadow:var(--lift)}
+  #fallback b{font-size:13px}
+  #fallback textarea{flex:1;min-height:200px}
+  #fallback .close{padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
+  #lightbox{display:none;position:fixed;inset:0;background:rgba(29,29,31,0);backdrop-filter:blur(14px);z-index:90;cursor:zoom-out;align-items:center;justify-content:center}
+  #lightbox img{max-width:94vw;max-height:94vh;object-fit:contain;will-change:transform,opacity;border-radius:8px}
+  @media (prefers-reduced-motion: reduce){
+    .card.enter{animation:cardFade 180ms ease both}
+    @keyframes cardFade{from{opacity:0}to{opacity:1}}
+    .card.keep .status,.card.revise .status,.card.kill .status{animation:none}
+    .filters button:active,.actions button:active,#export:active{transform:none}
+    .card.leaving{transform:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1><span class="mode" id="modeBadge"></span>
+  <div class="counts">
+    <span>total <b id="cTotal">0</b></span>
+    <span class="k"><i></i>keep <b id="cKeep">0</b></span>
+    <span class="r"><i></i>change <b id="cRev">0</b></span>
+    <span class="x"><i></i>kill <b id="cKill">0</b></span>
+    <span><i></i>undecided <b id="cUnd">0</b></span>
+  </div>
+</header>
+<div class="filters" id="filters">
+  <button data-f="all" class="active">All</button><button data-f="keep">Kept</button><button data-f="revise">Change</button><button data-f="kill">Killed</button><button data-f="und">Undecided</button>
+</div>
+<div id="grid"></div>
+<footer>
+  <span class="hint">Click image to zoom · hover a card and press <b>K</b> keep · <b>C</b> change · <b>X</b> kill · <b>Keep</b> ships as-is · <b>Change</b> = right idea, re-render with your note · <b>Kill</b> = note becomes a permanent rule · notes autosave</span>
+  <button id="export">Export selections</button>
+</footer>
+<div id="lightbox"><img id="lightimg" alt=""></div>
+<div id="fallback"><div class="box"><b>Copy this JSON and paste it back to Claude:</b><textarea id="fbtext" readonly onclick="this.select()"></textarea><button class="close" onclick="document.getElementById('fallback').style.display='none'">Close</button></div></div>
+
+<script>
+const DATA = {{GALLERY_DATA}};
+const KEY = "adengine:"+DATA.campaign+":"+DATA.mode;
+let state = {}; try { state = JSON.parse(localStorage.getItem(KEY)||"{}"); } catch(_) { state = {}; }   // data: / sandboxed previews throw
+let filter = "all", hovered = null;
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+document.getElementById("title").innerHTML = (DATA.title || DATA.campaign) + '<span class="preview">Ad Engine</span>';
+document.getElementById("modeBadge").textContent = DATA.mode === "style" ? "Style pick" : "Batch review";
+
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(_) {} }
+function decision(id){ return (state[id]&&state[id].d)||"und"; }
+function ph(d){
+  if(DATA.mode==="style") return d==="keep"?"What do you like about this one?":"Notes…";
+  if(d==="keep")   return "Optional — anything worth noting before this ships";
+  if(d==="revise") return "Required — what should change on the re-render?";
+  if(d==="kill")   return "Why? This becomes a permanent rule for the brand";
+  return "Notes…";
+}
+
+function updateCounts(){
+  let k=0,r=0,x=0,u=0;
+  const dec = DATA.items.filter(it=>it.kind!=="reference");
+  dec.forEach(it=>{const d=decision(it.id); d==="keep"?k++:d==="revise"?r++:d==="kill"?x++:u++;});
+  cTotal.textContent=dec.length; cKeep.textContent=k; cRev.textContent=r; cKill.textContent=x; cUnd.textContent=u;
+}
+
+/* Apply a card's decision state in place — never rebuild the grid for a click.
+   (apple-design: animate from the current value; a full re-render is a hard cut.) */
+function paintCard(card, it){
+  const d = decision(it.id), note=(state[it.id]&&state[it.id].n)||"";
+  card.className = "card "+(it.kind==="reference"?"ref":(d!=="und"?d:""))+((it.blocking||[]).length?" blocked":"");
+  const ta = card.querySelector("textarea");
+  ta.placeholder = ph(d);
+  ta.classList.toggle("needs", d==="revise" && !note.trim());
+  card.querySelector(".noteflag").classList.toggle("show", !note.trim());
+}
+
+function render(){
+  const g = document.getElementById("grid"); g.innerHTML = "";
+  let i = 0;
+  DATA.items.forEach(it=>{
+    const d = decision(it.id);
+    if(it.kind==="reference" && filter!=="all") return;
+    if(it.kind!=="reference" && filter!=="all"&&filter!==d) return;
+    const note=(state[it.id]&&state[it.id].n)||"";
+    const card=document.createElement("div");
+    card.dataset.id = it.id;
+    card.classList.add("enter");
+    card.style.setProperty("--d", Math.min(i++*24,192)+"ms");
+    card.onmouseenter=()=>hovered=it.id; card.onmouseleave=()=>{if(hovered===it.id)hovered=null};
+    card.innerHTML=`
+      <div class="imgwrap"><span class="status"></span><img src="${it.src}" loading="lazy" alt="${it.label||it.id}"></div>
+      <div class="body">
+        <span class="refbadge">Reference · context only</span>
+        <span class="blockbadge">⛔ Blocked — ${(it.blocking||[]).length} renderer flag${(it.blocking||[]).length===1?'':'s'}</span>
+        <div class="label"><span class="id">${it.id}</span> ${it.label||""}</div>
+        <div class="meta">${it.meta||""}</div>
+        <div class="actions"><button class="bk">✓ Keep</button><button class="br">↻ Change</button><button class="bx">✕ Kill</button></div>
+        <textarea>${note}</textarea>
+        <div class="noteflag">↻ Add a note so the re-render knows what to fix</div>
+      </div>`;
+    card.querySelector("img").onclick=e=>openLightbox(it.src, e.target);
+    card.querySelector(".bk").onclick=()=>setD(it.id,"keep");
+    card.querySelector(".br").onclick=()=>setD(it.id,"revise");
+    card.querySelector(".bx").onclick=()=>setD(it.id,"kill");
+    card.querySelector("textarea").oninput=e=>{
+      state[it.id]=state[it.id]||{}; state[it.id].n=e.target.value; save();
+      paintCard(card, it);
+    };
+    paintCard(card, it);
+    g.appendChild(card);
+  });
+  updateCounts();
+}
+
+function setD(id,d){
+  const ref = DATA.items.find(x=>x.id===id); if(ref && ref.kind==="reference") return;
+  state[id]=state[id]||{}; state[id].d = (state[id].d===d? "und" : d); save();
+  const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+  const it = DATA.items.find(x=>x.id===id);
+  const now = decision(id);
+  if(card && it){
+    if(filter!=="all" && filter!==now){
+      /* Card no longer matches the filter — let it leave, then rebuild. */
+      card.classList.add("leaving");
+      setTimeout(render, REDUCED?0:170);
+    } else {
+      card.classList.remove("enter");           // don't replay the entrance
+      const badge = card.querySelector(".status");
+      badge.style.animation="none"; void badge.offsetWidth; badge.style.animation=""; // restart pop
+      paintCard(card, it);
+      updateCounts();
+    }
+  } else { render(); }
+}
+
+/* Origin-anchored lightbox: opens FROM the clicked thumbnail and closes back
+   along the same path (apple-design: spatial consistency + materialize). */
+let lbSource = null;
+function delta(img, r){
+  const ir = img.getBoundingClientRect();
+  return {
+    dx:(r.left+r.width/2)-(ir.left+ir.width/2),
+    dy:(r.top+r.height/2)-(ir.top+ir.height/2),
+    s: Math.max(.12, Math.min(r.width/ir.width, r.height/ir.height))
+  };
+}
+function openLightbox(src, fromEl){
+  const lb=document.getElementById("lightbox"), img=document.getElementById("lightimg");
+  lbSource = fromEl;
+  img.src=src; lb.style.display="flex";
+  if(REDUCED){ lb.style.background="rgba(29,29,31,.92)"; return; }
+  requestAnimationFrame(()=>{
+    const r=fromEl.getBoundingClientRect(), m=delta(img,r);
+    lb.animate([{background:"rgba(29,29,31,0)"},{background:"rgba(29,29,31,.92)"}],{duration:260,easing:"ease-out",fill:"forwards"});
+    img.animate([
+      {transform:`translate(${m.dx}px,${m.dy}px) scale(${m.s})`,opacity:.35},
+      {transform:"translate(0,0) scale(1)",opacity:1}
+    ],{duration:320,easing:"cubic-bezier(.2,.9,.25,1)"});
+  });
+}
+function closeLightbox(){
+  const lb=document.getElementById("lightbox"), img=document.getElementById("lightimg");
+  if(lb.style.display!=="flex") return;
+  if(REDUCED || !lbSource || !lbSource.isConnected){ lb.style.display="none"; lb.style.background="rgba(29,29,31,0)"; return; }
+  const r=lbSource.getBoundingClientRect(), m=delta(img,r);
+  lb.animate([{background:"rgba(29,29,31,.92)"},{background:"rgba(29,29,31,0)"}],{duration:240,easing:"ease-in",fill:"forwards"});
+  img.animate([
+    {transform:"translate(0,0) scale(1)",opacity:1},
+    {transform:`translate(${m.dx}px,${m.dy}px) scale(${m.s})`,opacity:0}
+  ],{duration:240,easing:"cubic-bezier(.3,.7,.4,1)"}).onfinish=()=>{lb.style.display="none"};
+}
+document.getElementById("lightbox").onclick=closeLightbox;
+
+document.getElementById("filters").onclick=e=>{
+  if(!e.target.dataset.f) return;
+  filter=e.target.dataset.f;
+  document.querySelectorAll(".filters button").forEach(b=>b.classList.toggle("active",b.dataset.f===filter));
+  render();
+};
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="TEXTAREA") return;
+  if(hovered && (e.key==="k"||e.key==="K")) setD(hovered,"keep");
+  if(hovered && (e.key==="c"||e.key==="C")) setD(hovered,"revise");
+  if(hovered && (e.key==="x"||e.key==="X")) setD(hovered,"kill");
+  if(e.key==="Escape"){closeLightbox();document.getElementById("fallback").style.display="none"}
+});
+document.getElementById("export").onclick=async()=>{
+  const out={campaign:DATA.campaign,mode:DATA.mode,exported:new Date().toISOString(),
+    decisions:DATA.items.filter(it=>it.kind!=="reference").map(it=>({id:it.id,decision:decision(it.id),note:(state[it.id]&&state[it.id].n)||""}))};
+  const json=JSON.stringify(out,null,2);
+  try{ await navigator.clipboard.writeText(json);
+    const b=document.getElementById("export"); b.textContent="Copied — paste to Claude"; b.classList.add("done");
+    setTimeout(()=>{b.textContent="Export selections";b.classList.remove("done")},2500);
+  }catch(_){ document.getElementById("fbtext").value=json; document.getElementById("fallback").style.display="block"; }
+};
+render();
+</script>
+</body>
+</html>

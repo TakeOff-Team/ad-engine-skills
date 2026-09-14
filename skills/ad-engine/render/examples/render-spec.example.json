@@ -1,0 +1,216 @@
+{
+  "campaign": "northwind-pool-marketing-2026-09-04",
+  "output_dir": "out",
+  "brand": {
+    "name": "Northwind",
+    "primary": "#0B5FFF",
+    "accent": "#FFC531",
+    "ink": "#0E0F14",
+    "paper": "#FFFFFF",
+    "muted": "#6B7280",
+    "font_display": "Sora",
+    "font_body": "Inter",
+    "google_fonts": [
+      "Sora:wght@600;700;800"
+    ]
+  },
+  "renders": [
+    {
+      "id": "c01",
+      "template": "typographic-hero",
+      "file": "c01-hero-primary.png",
+      "aspect": "4:5",
+      "slots": {
+        "eyebrow": "For pool service companies",
+        "headline": "3\u20135 new pool accounts a month, <em>or you don't pay.</em>",
+        "subhead": "We run the ads, book the estimates, and follow up. You keep the route.",
+        "cta": "Book a 15-min call",
+        "footer": "northwind.co/pool"
+      }
+    },
+    {
+      "id": "c02",
+      "template": "typographic-hero",
+      "file": "c02-hero-photo.png",
+      "aspect": "4:5",
+      "slots": {
+        "theme": "ink",
+        "bg": "test-bg.jpg",
+        "eyebrow": "No leads, no bill",
+        "headline": "We run your ads. <em>You pay the ad spend.</em> No monthly fee.",
+        "cta": "See how it works",
+        "footer": "@northwind"
+      }
+    },
+    {
+      "id": "c03",
+      "template": "typographic-hero",
+      "file": "c03-hero-paper.png",
+      "aspect": "1:1",
+      "slots": {
+        "theme": "paper",
+        "eyebrow": "Done-for-you",
+        "headline": "You didn't start a pool company to <em>become a content creator.</em>",
+        "subhead": "We write it, film it, and post it. You stay the expert.",
+        "cta": "Get the plan"
+      }
+    },
+    {
+      "id": "c04",
+      "template": "proof-card",
+      "file": "c04-proof.png",
+      "aspect": "4:5",
+      "slots": {
+        "eyebrow": "Client result",
+        "big-number": "$124.4K",
+        "big-label": "in booked jobs \u00b7 first 30 days",
+        "screenshot": "test-capture.png",
+        "screenshot-caption": "Jobber dashboard \u00b7 Aug 1\u201330, 2026 \u00b7 shared with permission",
+        "metric-1-value": "41",
+        "metric-1-label": "estimates booked",
+        "metric-2-value": "$2,140",
+        "metric-2-label": "avg ticket",
+        "metric-3-value": "11\u00d7",
+        "metric-3-label": "return on ad spend",
+        "client-initials": "DR",
+        "client-name": "Dana Reyes",
+        "client-role": "Clearwater Pools \u00b7 Tampa",
+        "cta": "Get results like Dana"
+      }
+    },
+    {
+      "id": "c05",
+      "template": "proof-card",
+      "file": "c05-proof-NO-SHOT.png",
+      "aspect": "4:5",
+      "slots": {
+        "big-number": "$88K",
+        "big-label": "in 60 days",
+        "client-name": "Test Missing Screenshot",
+        "client-initials": "TM"
+      }
+    },
+    {
+      "id": "c06",
+      "template": "testimonial-card",
+      "file": "c06-testimonial.png",
+      "aspect": "4:5",
+      "slots": {
+        "result": "Fully booked through October.",
+        "stars": "5",
+        "quote": "\u201cWe went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark> the ads went live, and it hasn't slowed down since.\u201d",
+        "client-initials": "MK",
+        "client-name": "Marcus Klein",
+        "client-role": "Owner, Bluewater Pool Care \u00b7 Phoenix",
+        "source": "Google review \u00b7 August 2026",
+        "cta": "Read more reviews"
+      }
+    },
+    {
+      "id": "c07",
+      "template": "testimonial-card",
+      "file": "c07-testimonial-ink.png",
+      "aspect": "4:5",
+      "slots": {
+        "theme": "ink",
+        "result": "$41K in the first month.",
+        "stars": "5",
+        "quote": "\u201cI was <mark>absolutely amazed how fast things happened</mark> once I said yes. Backup plans were ready before I even asked.\u201d",
+        "client-initials": "BM",
+        "client-name": "Barry McPherson",
+        "client-role": "Client since 2025 \u00b7 Denver",
+        "source": "Video testimonial \u00b7 Jul 2026",
+        "disclaimer": "Individual results vary."
+      }
+    },
+    {
+      "id": "c08",
+      "template": "notes-screenshot",
+      "file": "c08-notes.png",
+      "aspect": "4:5",
+      "slots": {
+        "title": "Pool companies:",
+        "date": "September 4, 2026 at 9:41 AM",
+        "body": "<p>I'll bring you 3\u20135 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract. No \u201cstrategy sessions.\u201d</p><p>If that's interesting, the link below explains exactly how it works and what it costs.</p>"
+      }
+    },
+    {
+      "id": "c09",
+      "template": "notes-screenshot",
+      "file": "c09-notes-dark.png",
+      "aspect": "4:5",
+      "slots": {
+        "theme": "dark",
+        "title": "Why we stopped charging a retainer",
+        "date": "Today at 7:12 AM",
+        "body": "<p>Retainers pay the agency whether or not the phone rings.</p><p>So we cut ours. Now we get paid per booked estimate.</p><p>It changed how we work. Every ad has to earn a phone call, not a report.</p>"
+      }
+    },
+    {
+      "id": "c11",
+      "template": "comparison-table",
+      "file": "c11-comparison.png",
+      "aspect": "4:5",
+      "slots": {
+        "eyebrow": "Booked estimates \u00b7 first 90 days",
+        "title": "Same budget. <br>Different phone.",
+        "subtitle": "Average across 12 pool-service clients vs. their previous agency (documented, on file).",
+        "col-1": "Metric",
+        "col-2": "With Northwind",
+        "col-3": "Previous agency",
+        "rows": "<tr><td>Estimates booked / mo</td><td>41</td><td>9</td></tr><tr><td>Cost per booked estimate</td><td>$38</td><td>$140</td></tr><tr><td>Days to first booking</td><td>4</td><td>31</td></tr><tr><td>Monthly retainer</td><td>$0</td><td>$2,500</td></tr>",
+        "source": "Client dashboards, Jan\u2013Aug 2026 \u00b7 12 accounts \u00b7 shared with permission",
+        "cta": "See the full data"
+      }
+    },
+    {
+      "id": "c12",
+      "template": "social-proof-capture",
+      "file": "c12-social-proof.png",
+      "aspect": "4:5",
+      "slots": {
+        "headline": "Sound familiar?",
+        "capture": "test-capture.png",
+        "caption": "r/poolpros \u00b7 130 upvotes \u00b7 captured Sep 2026 (FIXTURE IMAGE)",
+        "source": "Public Reddit post, username removed \u00b7 permission basis: public",
+        "cta": "Here's what we do about it"
+      }
+    },
+    {
+      "id": "c13",
+      "template": "social-proof-capture",
+      "file": "c13-social-proof-NO-CAPTURE.png",
+      "aspect": "4:5",
+      "slots": {
+        "headline": "Sound familiar?",
+        "source": "",
+        "theme": "ink"
+      }
+    },
+    {
+      "id": "c14",
+      "template": "photo-text-band",
+      "file": "c14-photo-band.png",
+      "aspect": "4:5",
+      "slots": {
+        "photo": "test-bg.jpg",
+        "eyebrow": "For pool service companies",
+        "headline": "Stop renting leads. <em>Own the phone call.</em>",
+        "subhead": "We run the ads, book the estimates, and follow up.",
+        "cta": "Book a 15-min call",
+        "disclaimer": "Individual results vary."
+      }
+    },
+    {
+      "id": "c15",
+      "template": "photo-text-band",
+      "file": "c15-photo-band-NO-PHOTO.png",
+      "aspect": "1:1",
+      "slots": {
+        "headline": "No photo supplied",
+        "band": "top",
+        "band-theme": "ink"
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "ad-engine-render",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright HTML→PNG renderer for the ad-engine chain (mode 2: type / data / UI / quote formats)",
+  "main": "render.js",
+  "scripts": {
+    "render": "node render.js",
+    "setup": "npm install && npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}

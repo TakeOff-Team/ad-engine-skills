@@ -1,0 +1,98 @@
+{
+  "campaign": "qa-checks-test",
+  "output_dir": "out-qa",
+  "brand": {
+    "name": "Neonwind",
+    "primary": "#A6F23F",
+    "accent": "#0A0A0A",
+    "ink": "#0E0F14",
+    "paper": "#FFFFFF",
+    "font_display": "Sora",
+    "font_body": "Inter",
+    "google_fonts": [
+      "Sora:wght@600;700;800"
+    ]
+  },
+  "renders": [
+    {
+      "id": "q01",
+      "template": "typographic-hero",
+      "file": "q01-neon-primary-ground.png",
+      "aspect": "4:5",
+      "slots": {
+        "eyebrow": "Light primary test",
+        "headline": "Text on a neon ground <em>must still read.</em>",
+        "subhead": "Derived on-primary token should switch to ink.",
+        "cta": "Book a call"
+      }
+    },
+    {
+      "id": "q02",
+      "template": "testimonial-card",
+      "file": "q02-neon-as-text.png",
+      "aspect": "4:5",
+      "slots": {
+        "result": "Neon headline on paper falls back to ink.",
+        "quote": "\u201c<mark>Readable</mark> is the whole point.\u201d",
+        "client-initials": "NW",
+        "client-name": "Neon Wind",
+        "source": "fixture"
+      }
+    },
+    {
+      "id": "q03",
+      "template": "comparison-table",
+      "file": "q03-long-cells.png",
+      "aspect": "1:1",
+      "slots": {
+        "title": "Overflow detector",
+        "col-1": "Metric",
+        "col-2": "With us",
+        "col-3": "Before",
+        "rows": "<tr><td>Something with an extremely long label that cannot fit</td><td>Another tool everyone in your company has already tried</td><td>9</td></tr><tr><td>Cost</td><td>$38</td><td>$140</td></tr>",
+        "source": "fixture"
+      }
+    },
+    {
+      "id": "q04",
+      "template": "proof-card",
+      "file": "q04-portrait-shot-contain.png",
+      "aspect": "4:5",
+      "slots": {
+        "big-number": "6\u00d7",
+        "big-label": "organic leads",
+        "screenshot": "test-portrait.png",
+        "frame": "phone",
+        "client-initials": "CM",
+        "client-name": "Champ M.",
+        "screenshot-caption": "text message \u00b7 portrait capture \u00b7 contain"
+      }
+    },
+    {
+      "id": "q05",
+      "template": "proof-card",
+      "file": "q05-portrait-shot-cover.png",
+      "aspect": "9:16",
+      "slots": {
+        "big-number": "6\u00d7",
+        "big-label": "organic leads",
+        "screenshot": "test-portrait.png",
+        "fit": "cover",
+        "client-initials": "CM",
+        "client-name": "Champ M.",
+        "screenshot-caption": "same capture \u00b7 cover (should warn CROP)"
+      }
+    },
+    {
+      "id": "q06",
+      "template": "typographic-hero",
+      "file": "q06-forced-overflow.png",
+      "aspect": "1:1",
+      "slots": {
+        "theme": "paper",
+        "headline": "<span style=\"white-space:nowrap\">Anunbreakablewordthatcannotwrapanywhereandmustoverflowthecanvasedge</span>",
+        "subhead": "Forces a horizontal OVERFLOW warning on purpose."
+      }
+    }
+  ]
+}

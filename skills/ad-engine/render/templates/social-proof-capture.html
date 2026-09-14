@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+  ad-engine / render / social-proof-capture.html
+  FORMAT 6 — Found social proof. A REAL screenshot (Reddit post, DM, review, tweet) framed as the ad.
+  Canvas: 1080×1350 default; scales to 1:1 and 9:16.
+
+  HARD RULE: this template is a FRAME for a real capture. It never fabricates a post, a DM, or a review.
+  Empty `capture` slot → red "REAL CAPTURE REQUIRED" block + window.__qa() flag. Nothing to design here —
+  the honesty of the capture is the whole creative.
+
+  SLOTS
+    capture       (img src) the REAL screenshot — public post, or a DM/review with permission
+    headline      (optional) one line above the frame — "This is why we built it." / "Sound familiar?"
+    caption       (optional) under the frame — "r/realtors · 130 upvotes · captured Sep 2026"
+    source        where it's from + permission status — "Public Reddit post, username removed" / "Client DM, shared with permission"
+    cta           (optional)
+    disclaimer    (optional) — default provided
+    theme         (optional) "" paper | "ink" | "primary"
+    brand-name / logo  injected from spec.brand
+-->
+<style>
+  :root{ --brand-primary:#173EF5; --brand-accent:#FFB800; --brand-ink:#111111; --brand-paper:#FFFFFF; --brand-muted:#6B6B73;
+         --font-display:Inter,system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100vw;height:100vh;overflow:hidden}
+  body{background:#F2F2F5;color:var(--brand-ink);font-family:var(--font-body)}
+  body.theme-ink{background:var(--brand-ink);color:#fff}
+  body.theme-primary{background:var(--brand-primary);color:var(--brand-on-primary,#fff)}
+  .frame{height:100%;padding:56px 64px 52px;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
+  .brand img{height:48px;width:auto;max-width:240px}
+  .brand img[src=""],.brand img:not([src]){display:none}
+  .headline{margin-top:36px;font-family:var(--font-display);font-weight:900;font-size:64px;line-height:1.02;letter-spacing:-.03em;text-wrap:balance;flex-shrink:0}
+  .stage{flex:1;min-height:0;margin-top:34px;display:flex;align-items:center;justify-content:center}
+  .card{position:relative;width:100%;max-height:100%;border-radius:26px;overflow:hidden;background:#fff;
+        box-shadow:0 30px 70px rgba(0,0,0,.22),0 2px 0 rgba(0,0,0,.04);display:flex;flex-direction:column;transform:rotate(-1.2deg)}
+  .card img{display:block;width:100%;height:auto;max-height:100%;object-fit:contain;object-position:top}
+  .card img[src=""],.card img:not([src]){display:none}
+  .missing{display:none;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;padding:60px 40px;min-height:520px;
+           background:repeating-linear-gradient(45deg,#3a0d0d 0 24px,#520f0f 24px 48px);color:#fff;font-weight:900;font-family:var(--font-display);font-size:44px;line-height:1.15}
+  .card.no-capture .missing{display:flex}
+  .caption{margin-top:22px;font-size:22px;font-weight:600;color:var(--brand-muted);flex-shrink:0}
+  body.theme-ink .caption,body.theme-primary .caption{color:rgba(255,255,255,.75)}
+  .bottom{flex-shrink:0;margin-top:26px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+  .source{font-size:19px;color:var(--brand-muted);line-height:1.35;max-width:640px}
+  .disclaimer{font-size:17px;color:var(--brand-muted);margin-top:6px}
+  body.theme-ink .source,body.theme-ink .disclaimer,body.theme-primary .source,body.theme-primary .disclaimer{color:rgba(255,255,255,.6)}
+  .cta{font-family:var(--font-display);font-weight:800;font-size:26px;padding:20px 28px;border-radius:16px;background:var(--brand-primary);color:var(--brand-on-primary,#fff);white-space:nowrap}
+  .cta::after{content:" →"}
+  body.theme-ink .cta,body.theme-primary .cta{background:var(--brand-accent);color:var(--brand-ink)}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="top"><div class="brand"><img data-slot-src="logo" data-optional alt=""><span data-slot="brand-name" data-optional>Brand</span></div></div>
+  <h1 class="headline" data-slot="headline" data-optional data-fit data-fit-min="40">Sound familiar?</h1>
+  <div class="stage">
+    <div class="card" id="card">
+      <img data-slot-src="capture" data-optional alt="">
+      <div class="missing"><div>REAL CAPTURE REQUIRED</div><div style="font-size:24px;font-weight:600;opacity:.85;max-width:720px">This format frames a real post, DM, or review. Never fabricate one. Supply a screenshot (public, or shared with permission).</div></div>
+    </div>
+  </div>
+  <div class="caption" data-slot="caption" data-optional>r/somewhere · 130 upvotes · captured Sep 2026</div>
+  <div class="bottom">
+    <div>
+      <div class="source" data-slot="source">Where this came from, and the permission basis</div>
+      <div class="disclaimer" data-slot="disclaimer" data-default>Real post. Names removed. Individual experiences vary.</div>
+    </div>
+    <div class="cta" data-slot="cta" data-optional>Here's what we do about it</div>
+  </div>
+</div>
+<span data-slot="theme" data-optional hidden></span>
+<script>
+  const sync = () => {
+    const theme = ((document.querySelector('[data-slot="theme"]')||{}).textContent || '').trim();
+    const cls = theme ? 'theme-' + theme : '';
+    if (document.body.className !== cls) document.body.className = cls;
+    const img = document.querySelector('#card img');
+    document.getElementById('card').classList.toggle('no-capture', !(img && img.getAttribute('src')));
+  };
+  window.__sync = sync; sync();
+  window.__qa = function(){
+    const flags = [];
+    if (document.getElementById('card').classList.contains('no-capture')) flags.push('SOCIAL PROOF WITHOUT A REAL CAPTURE — cannot ship. This template never fabricates a post; supply a screenshot.');
+    const src = (document.querySelector('[data-slot="source"]')||{}).textContent || '';
+    if (!src.trim() || /where this came from/i.test(src)) flags.push('NO SOURCE / PERMISSION LINE — state where the capture is from and on what basis it can be used.');
+    flags.push('AUTHENTICITY CHECK: the capture must be unedited except for removing names/handles; the person must be public or have given permission.');
+    return flags;
+  };
+</script>
+</body>
+</html>

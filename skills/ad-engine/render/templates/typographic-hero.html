@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+  ad-engine / render / typographic-hero.html
+  FORMAT 2 — Typographic hero. The guarantee / big promise is the top of the type hierarchy.
+  Canvas: 1080×1350 (4:5) — body scales to any viewport the renderer sets.
+
+  SLOTS
+    eyebrow        (optional) small pill above the headline — "FOR POOL SERVICE COMPANIES"
+    headline       the promise / guarantee — 3–9 words. Auto-fits.
+    subhead        (optional) one supporting line — mechanism or offer
+    cta            (optional) button text — "Book a free call"
+    footer         (optional) tiny line bottom-right — url / handle
+    disclaimer     (optional) compliance line under the CTA row — "Individual results vary." Required whenever the headline states a result
+    brand-name     injected by renderer from spec.brand.name
+    logo           (optional, img src) injected from spec.brand.logo_url
+    bg             (optional, img src) photo behind everything; overlay applied automatically
+  CSS VARS (from spec.brand)  --brand-primary --brand-accent --brand-ink --brand-paper --font-display --font-body
+  MODIFIERS via slot "theme": "" (primary ground) | "paper" (light ground) | "ink" (dark ground)
+-->
+<style>
+  :root{ --brand-primary:#173EF5; --brand-accent:#FFB800; --brand-ink:#111111; --brand-paper:#FFFFFF; --brand-muted:#6B6B73;
+         --font-display:Inter,system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100vw;height:100vh;overflow:hidden}
+  body{ position:relative; background:var(--brand-primary); color:var(--brand-on-primary,#fff); font-family:var(--font-body); }
+  body.theme-paper{ background:var(--brand-paper); color:var(--brand-ink); }
+  body.theme-ink{ background:var(--brand-ink); color:#fff; }
+
+  .bg-layer{position:absolute;inset:0;z-index:0;display:none}
+  .bg-layer img{width:100%;height:100%;object-fit:cover;display:block}
+  .bg-layer.on{display:block}
+  .overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.28) 0%,rgba(0,0,0,.55) 60%,rgba(0,0,0,.78) 100%);display:none}
+  .bg-layer.on + .overlay{display:block}
+
+  .frame{position:relative;z-index:2;height:100%;padding:64px;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-shrink:0}
+  .brand{display:flex;align-items:center;gap:16px;font-family:var(--font-display);font-weight:800;font-size:30px;letter-spacing:-.01em}
+  .brand img{height:56px;width:auto;max-width:280px;display:block}
+  .brand img[src=""],.brand img:not([src]){display:none}
+  .eyebrow{font-family:var(--font-mono,var(--font-body));display:inline-block;font-weight:700;font-size:24px;letter-spacing:.14em;text-transform:uppercase;
+           padding:12px 18px;border-radius:999px;background:color-mix(in srgb,var(--brand-on-primary,#fff) 14%,transparent);border:1.5px solid color-mix(in srgb,var(--brand-on-primary,#fff) 35%,transparent)}
+  body.theme-paper .eyebrow{background:color-mix(in srgb,var(--brand-primary) 10%,transparent);border-color:color-mix(in srgb,var(--brand-primary) 40%,transparent);color:var(--brand-primary)}
+
+  .mid{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:40px 0}
+  .headline-box{height:560px;display:flex;align-items:flex-end}
+  .headline{font-family:var(--font-display);font-weight:900;font-size:200px;line-height:var(--display-lh,.96);letter-spacing:-.035em;
+            text-wrap:balance;width:100%}
+  .headline em{font-style:normal;color:var(--brand-accent)}
+  body.theme-ink .headline em{color:var(--brand-accent-on-ink,var(--brand-accent))}
+  body.theme-paper .headline em{color:var(--brand-primary-text,var(--brand-primary))}
+  .subhead{margin-top:34px;font-size:44px;line-height:1.25;font-weight:500;max-width:880px;opacity:.92}
+
+  .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-shrink:0}
+  .cta{display:inline-flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:30px;
+       padding:24px 36px;border-radius:18px;background:var(--brand-on-primary,#fff);color:var(--brand-primary);letter-spacing:-.01em;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .cta::after{content:"→";font-weight:900}
+  body.theme-paper .cta{background:var(--brand-primary);color:var(--brand-on-primary,#fff)}
+  body.theme-ink .cta{background:var(--brand-accent-on-ink,var(--brand-accent));color:var(--brand-ink)}
+  .footer{font-size:22px;font-weight:600;opacity:.75;text-align:right;letter-spacing:.02em}
+  .disclaimer{font-size:17px;opacity:.6;margin-top:18px;letter-spacing:.01em;flex-shrink:0}
+  body.em-fallback .headline em{color:var(--brand-paper)}
+  body.theme-paper.em-fallback .headline em{color:var(--brand-primary)}
+  body.theme-ink.em-fallback .headline em{color:var(--brand-accent)}
+.headline em{display:inline;line-height:inherit;vertical-align:baseline;margin:0;padding:0;font-size:inherit}
+/* scale pass — The AI Course review 2026-09-13 */ .subhead{font-size:56px;line-height:1.2;max-width:960px} .cta{font-size:40px;padding:26px 40px;border-radius:18px}
+/* display scale — brand.display_scale */ .headline{font-size:calc(200px * var(--display-scale,1))}
+</style>
+</head>
+<body>
+  <div class="bg-layer"><img data-slot-src="bg" data-optional data-crop-ok alt=""></div>
+  <div class="overlay"></div>
+
+  <div class="frame">
+    <div class="top">
+      <div class="brand"><img data-slot-src="logo" data-optional alt=""><span data-slot="brand-name" data-optional>Brand</span></div>
+      <div class="eyebrow" data-slot="eyebrow" data-optional>For service businesses</div>
+    </div>
+
+    <div class="mid">
+      <div class="headline-box"><h1 class="headline" data-slot="headline" data-fit data-fit-min="64">We get you sales <em>or you don't pay.</em></h1></div>
+      <p class="subhead" data-slot="subhead" data-optional>One supporting line goes here — the mechanism or the offer.</p>
+    </div>
+
+    <div class="bottom">
+      <div class="cta" data-slot="cta" data-optional>Book a free call</div>
+      <div class="footer" data-slot="footer" data-optional>brand.com</div>
+    </div>
+    <div class="disclaimer" data-slot="disclaimer" data-optional>Individual results vary.</div>
+  </div>
+
+<script>
+  // theme + bg wiring happens after slots are injected; renderer calls fit after this runs on load
+  // contrast guard: the <em> accent must be readable on whatever ground the theme chose.
+  // Pneuma (accent == primary) rendered the accent phrase invisibly with zero machine warning.
+  function lum(hex){ const m=/^#?([0-9a-f]{6})$/i.exec(hex.trim()); if(!m) return null;
+    const c=[0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
+    return .2126*c[0]+.7152*c[1]+.0722*c[2]; }
+  function contrast(a,b){ const la=lum(a), lb=lum(b); if(la==null||lb==null) return null; const [h,l]=la>lb?[la,lb]:[lb,la]; return (h+.05)/(l+.05); }
+  function groundHex(){ const cs=getComputedStyle(document.documentElement); const t=document.body.className;
+    return t.includes('theme-paper')?cs.getPropertyValue('--brand-paper'):t.includes('theme-ink')?cs.getPropertyValue('--brand-ink'):cs.getPropertyValue('--brand-primary'); }
+  let emContrast = null;
+  function guardEm(){
+    const cs=getComputedStyle(document.documentElement);
+    const emHex = document.body.className.includes('theme-paper') ? cs.getPropertyValue('--brand-primary') : cs.getPropertyValue('--brand-accent');
+    emContrast = contrast(emHex, groundHex());
+    const bg = document.querySelector('.bg-layer').classList.contains('on');
+    document.body.classList.toggle('em-fallback', !bg && emContrast != null && emContrast < 2.5);
+  }
+  window.__qa = function(){
+    const flags = [];
+    const h = document.querySelector('.headline');
+    const words = h.textContent.trim().split(/\s+/).filter(Boolean).length;
+    if (words > 12) flags.push(`headline is ${words} words — real ads top out around 9; consider cutting`);
+    if (h.querySelector('em') && emContrast != null && emContrast < 2.5) flags.push(`accent phrase contrast ${emContrast.toFixed(1)}:1 on this ground — swapped to a readable fallback color; check the render`);
+    return flags;
+  };
+  // called by render.js after slots are injected (no MutationObserver — self-mutation loops never settle `load`)
+  window.__sync = function(){
+    const theme = ((document.querySelector('[data-slot="theme"]')||{}).textContent || '').trim();
+    const cls = theme ? 'theme-' + theme : '';
+    if (document.body.className !== cls) document.body.className = cls;
+    const bg = document.querySelector('.bg-layer img');
+    document.querySelector('.bg-layer').classList.toggle('on', !!(bg && bg.getAttribute('src')));
+    guardEm();
+  };
+</script>
+<span data-slot="theme" data-optional hidden></span>
+</body>
+</html>
