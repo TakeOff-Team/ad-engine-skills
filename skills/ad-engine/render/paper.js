@@ -232,8 +232,14 @@ async function main() {
     fs.writeFileSync(fileMemo, JSON.stringify({ file_id: fileId, url: fileUrl, created_at: new Date().toISOString(), campaign: spec.campaign }, null, 2));
     console.log(`  · created Paper file ${fileUrl} (saved to paper-file.json — put paper_file_id in the spec or brand-kit to reuse it)`);
   }
-  const info = PaperClient.json(await paper.call('open_file', { fileId })) || {};
+  let info = PaperClient.json(await paper.call('open_file', { fileId })) || {};
   fileUrl = fileUrl || info.url;
+  // one page per campaign — artboards never land on whatever page happened to be open (the first annotated batch
+  // landed on the Inspiration page because inspiration.js had left it sticky)
+  const pageName = spec.campaign || 'ad-engine';
+  let page = (info.pages || []).find(p => p.name === pageName);
+  if (!page) { const pg = PaperClient.json(await paper.call('create_page', { name: pageName })) || {}; page = { id: pg.pageId || pg.id, name: pageName }; }
+  if (page && page.id) { info = PaperClient.json(await paper.call('open_file', { fileId, pageId: page.id })) || info; }
   console.log(`\nad-engine paper · ${spec.campaign || 'campaign'} · file "${info.fileName || fileId}" · ${info.url || ''}\n`);
 
   // --- fonts: Paper draws from the machine / Google Fonts, not from our @font-face files --------
