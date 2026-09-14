@@ -22,7 +22,7 @@
       "aspect": "4:5",
       "slots": {
         "eyebrow": "For pool service companies",
-        "headline": "3\u20135 new pool accounts a month, <em>or you don't pay.</em>",
+        "headline": "3–5 new pool accounts a month, <em>or you don't pay.</em>",
         "subhead": "We run the ads, book the estimates, and follow up. You keep the route.",
         "cta": "Book a 15-min call",
         "footer": "northwind.co/pool"
@@ -63,18 +63,18 @@
       "slots": {
         "eyebrow": "Client result",
         "big-number": "$124.4K",
-        "big-label": "in booked jobs \u00b7 first 30 days",
+        "big-label": "in booked jobs · first 30 days",
         "screenshot": "test-capture.png",
-        "screenshot-caption": "Jobber dashboard \u00b7 Aug 1\u201330, 2026 \u00b7 shared with permission",
+        "screenshot-caption": "Jobber dashboard · Aug 1–30, 2026 · shared with permission",
         "metric-1-value": "41",
         "metric-1-label": "estimates booked",
         "metric-2-value": "$2,140",
         "metric-2-label": "avg ticket",
-        "metric-3-value": "11\u00d7",
+        "metric-3-value": "11×",
         "metric-3-label": "return on ad spend",
         "client-initials": "DR",
         "client-name": "Dana Reyes",
-        "client-role": "Clearwater Pools \u00b7 Tampa",
+        "client-role": "Clearwater Pools · Tampa",
         "cta": "Get results like Dana"
       }
     },
@@ -98,11 +98,11 @@
       "slots": {
         "result": "Fully booked through October.",
         "stars": "5",
-        "quote": "\u201cWe went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark> the ads went live, and it hasn't slowed down since.\u201d",
+        "quote": "“We went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark> the ads went live, and it hasn't slowed down since.”",
         "client-initials": "MK",
         "client-name": "Marcus Klein",
-        "client-role": "Owner, Bluewater Pool Care \u00b7 Phoenix",
-        "source": "Google review \u00b7 August 2026",
+        "client-role": "Owner, Bluewater Pool Care · Phoenix",
+        "source": "Google review · August 2026",
         "cta": "Read more reviews"
       }
     },
@@ -115,11 +115,11 @@
         "theme": "ink",
         "result": "$41K in the first month.",
         "stars": "5",
-        "quote": "\u201cI was <mark>absolutely amazed how fast things happened</mark> once I said yes. Backup plans were ready before I even asked.\u201d",
+        "quote": "“I was <mark>absolutely amazed how fast things happened</mark> once I said yes. Backup plans were ready before I even asked.”",
         "client-initials": "BM",
         "client-name": "Barry McPherson",
-        "client-role": "Client since 2025 \u00b7 Denver",
-        "source": "Video testimonial \u00b7 Jul 2026",
+        "client-role": "Client since 2025 · Denver",
+        "source": "Video testimonial · Jul 2026",
         "disclaimer": "Individual results vary."
       }
     },
@@ -131,7 +131,7 @@
       "slots": {
         "title": "Pool companies:",
         "date": "September 4, 2026 at 9:41 AM",
-        "body": "<p>I'll bring you 3\u20135 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract. No \u201cstrategy sessions.\u201d</p><p>If that's interesting, the link below explains exactly how it works and what it costs.</p>"
+        "body": "<p>I'll bring you 3–5 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract. No “strategy sessions.”</p><p>If that's interesting, the link below explains exactly how it works and what it costs.</p>"
       }
     },
     {
@@ -152,14 +152,14 @@
       "file": "c11-comparison.png",
       "aspect": "4:5",
       "slots": {
-        "eyebrow": "Booked estimates \u00b7 first 90 days",
+        "eyebrow": "Booked estimates · first 90 days",
         "title": "Same budget. <br>Different phone.",
         "subtitle": "Average across 12 pool-service clients vs. their previous agency (documented, on file).",
         "col-1": "Metric",
         "col-2": "With Northwind",
         "col-3": "Previous agency",
         "rows": "<tr><td>Estimates booked / mo</td><td>41</td><td>9</td></tr><tr><td>Cost per booked estimate</td><td>$38</td><td>$140</td></tr><tr><td>Days to first booking</td><td>4</td><td>31</td></tr><tr><td>Monthly retainer</td><td>$0</td><td>$2,500</td></tr>",
-        "source": "Client dashboards, Jan\u2013Aug 2026 \u00b7 12 accounts \u00b7 shared with permission",
+        "source": "Client dashboards, Jan–Aug 2026 · 12 accounts · shared with permission",
         "cta": "See the full data"
       }
     },
@@ -171,8 +171,8 @@
       "slots": {
         "headline": "Sound familiar?",
         "capture": "test-capture.png",
-        "caption": "r/poolpros \u00b7 130 upvotes \u00b7 captured Sep 2026 (FIXTURE IMAGE)",
-        "source": "Public Reddit post, username removed \u00b7 permission basis: public",
+        "caption": "r/poolpros · 130 upvotes · captured Sep 2026 (FIXTURE IMAGE)",
+        "source": "Public Reddit post, username removed · permission basis: public",
         "cta": "Here's what we do about it"
       }
     },
@@ -210,6 +210,47 @@
         "headline": "No photo supplied",
         "band": "top",
         "band-theme": "ink"
+      }
+    },
+    {
+      "id": "c16",
+      "template": "annotated-hero",
+      "file": "c16-annotated-object.png",
+      "aspect": "4:5",
+      "slots": {
+        "headline": "pool leads on <em>autopilot</em>",
+        "object": "test-capture.png",
+        "object-rotate": "-3",
+        "note": "41 booked / mo",
+        "arrow": "on",
+        "mark": "asterisk",
+        "cta": "Book a 15-min call",
+        "disclaimer": "Individual results vary."
+      }
+    },
+    {
+      "id": "c17",
+      "template": "annotated-hero",
+      "file": "c17-annotated-authored.png",
+      "aspect": "4:5",
+      "slots": {
+        "headline-face": "body",
+        "headline": "<em>control room</em> for your leads",
+        "object-html": "<div class=\"stack\" style=\"width:84%\"><div class=\"file-card\" style=\"left:0;top:4%;transform:rotate(-4deg)\">estimates.md<small>booked</small></div><div class=\"file-card\" style=\"left:30%;top:34%;transform:rotate(2deg)\">follow-up.md<small>automatic</small></div><div class=\"file-card\" style=\"left:8%;top:64%;transform:rotate(-1.5deg)\">route.md<small>yours</small></div></div>",
+        "note": "reads the vault",
+        "note-pos": "tr",
+        "cta": "See how it works"
+      }
+    },
+    {
+      "id": "c18",
+      "template": "annotated-hero",
+      "file": "c18-annotated-empty.png",
+      "aspect": "4:5",
+      "slots": {
+        "theme": "ink",
+        "headline": "two <em>keywords</em> and <em>no object</em>",
+        "cta": "x"
       }
     }
   ]

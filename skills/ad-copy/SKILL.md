@@ -33,6 +33,7 @@ Read `references/ad-copy-digest.md` once before writing (headline formulas and w
 | `icp.md` | **The raw material.** Who buys, the trigger, the anti-persona, and every VoC quote. VoC phrasing is the copy; you are arranging their words, not inventing yours |
 | `brand-guide.md` | Tone words, what the brand never says, competitor names |
 | `rules.md` | `## Rules` (claims floor, banned claims), `## Default visual style` (text-on-image y/n, polish), `## Defaults` (headline variant count, stage preferences) |
+| `taste.md` | **The register on the image** — the digest's "voice on the image" line and the feel words. Remy's references are lowercase, casual, ≤ 6 words, one keyword marked; a headline that sounds like a template fails his taste even when the argument is right. Match the register they showed you; mark the ONE keyword with `<em>` for templates that give it the treatment |
 | `assets/references.md` | **The only source of numbers and quotes.** Proof inventory: documented results, testimonials with sources, what's confirmed vs derived |
 | `real-ads-reference/findings.md` | Category copy patterns (what the guarantee/offer language looks like out there) and **offer gaps** |
 | `ad-angles.md` (this run's block) | The concepts you're writing for: angle, persona, trigger, format, render path |

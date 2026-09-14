@@ -9,7 +9,7 @@ description: |
   gallery. Zero re-asking — Defaults carry the run; one compact plan line
   + cost is the only gate. Ends waiting for the gallery export → /ad-review.
   Use when: routed here by /ad-engine, "new ad batch for {brand}",
-  "/ad-batch {slug}". Requires the five context files (else /ad-onboard).
+  "/ad-batch {slug}". Requires the six context files incl. taste.md (else /ad-onboard).
   NOT for: onboarding, research refresh, or parsing review exports.
 argument-hint: "[slug] [--batch N] [--angles a1,a2]"
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob
@@ -21,7 +21,7 @@ The contract: **the operator says "new batch" and then does nothing until the ga
 
 ## Step 0 — Load + freshness (no user interaction)
 
-Read all five context files (`brand-kit`, `brand-guide`, `icp`, `rules`, `assets/references.md`) — `rules.md` frontmatter `brand_type` decides which Block A, which model row, and which QA lines apply; read it first. **Re-sweep** (ad-onboard Step 0.5, files newer than `brand-kit.md` `swept_at:`) — a new transcript or note since the last run feeds VoC before angles are written. Read `rules.md ## Defaults` — batch size, formats, aspect mix, model override all come from there (seed defaults: 6-8 concepts, 1 variant, category-routed model). Check `real-ads-reference/findings.md` date: **30+ days old → one line: "research is N weeks old — refresh first (~5 min) or run on the existing baseline?"** That, plus the cost gate, are the only permitted questions.
+Read all six context files (`brand-kit`, `brand-guide`, `icp`, `rules`, `assets/references.md`, `taste.md`) — `rules.md` frontmatter `brand_type` decides which Block A, which model row, and which QA lines apply; read it first. `taste.md`'s five-line digest and grammar decide which templates and which ground before any Default does (PLAYBOOK **References drive the template choice**); a `taste.md` still flagged `derived, not founder-confirmed` gets said in the plan line. **Re-sweep** (ad-onboard Step 0.5, files newer than `brand-kit.md` `swept_at:`) — a new transcript or note since the last run feeds VoC before angles are written. Read `rules.md ## Defaults` — batch size, formats, aspect mix, model override all come from there (seed defaults: 6-8 concepts, 1 variant, category-routed model). Check `real-ads-reference/findings.md` date: **30+ days old → one line: "research is N weeks old — refresh first (~5 min) or run on the existing baseline?"** That, plus the cost gate, are the only permitted questions.
 
 ## Step 1 — Angles
 
@@ -52,7 +52,7 @@ voice one-liner}
 
 The omit-over-garble line is load-bearing, not decoration — micro-text garbled on **8 of 8** first-pass Kodiak renders, and that line cleaned up the re-render. Never paraphrase it away.
 
-**Block B — the creative (written fresh for each concept, no template):** write it the way an art director briefs a photographer — the scene, the light, the moment, the feeling, what the eye lands on first. Vivid and specific beats safe and generic; the fidelity block already has correctness covered, so this block's only job is to be *good*. Honor `rules.md ## Default visual style` (composition, mood, text-on-image y/n, single vs. multi-panel) for standard concepts; the wildcard breaks it on purpose. If text is on the image, quote the exact headline copy.
+**Block B — the creative (written fresh for each concept, no template):** write it the way an art director briefs a photographer — the scene, the light, the moment, the feeling, what the eye lands on first. Vivid and specific beats safe and generic; the fidelity block already has correctness covered, so this block's only job is to be *good*. **Open with the `taste.md` digest** — ground, type move, hero object, decoration, voice — in the person's own words where they gave them; then honor `rules.md ## Default visual style` (composition, mood, text-on-image y/n, single vs. multi-panel) for standard concepts; the wildcard breaks it on purpose. A photo-led reference in `assets/inspiration/` can go to Higgsfield as a style image (`media_import_url`, note it in the manifest) — style only, never copied. If text is on the image, quote the exact headline copy. **Playwright concepts on a brand whose grammar is desk / annotated → `annotated-hero`** with a REAL object (capture, photo) or an AUTHORED one (the brand's own file cards, an offer card, an attributed quote card) — never a generated UI, never a screenshot the Defaults forbid.
 
 **Block A — proxy-subject variant (service brands, no product to be faithful to):** replace the packaging/garment lines with: *"The subject is {proxy: the client's world / the outcome / a person}. No invented logos, storefront names, screens, dashboards, or text of any kind in frame. No fabricated faces presented as clients. {polish level verbatim from `rules.md ## Default visual style`} {brand tail}"* — the fidelity job here is *absence of fabrication*, not exactness. Polish is whatever the style pick recorded; never presume raw.
 

@@ -40,11 +40,11 @@ In Claude Code, in any project folder:
 /ad-engine https://the-brand.com
 ```
 
-First run for a brand: the chain scrapes the site, asks five questions, pulls real ads from the category, and shows you a style gallery. You pick a direction. From then on a run is two actions: say "new batch," then click through the review gallery and paste the export.
+First run for a brand: the chain scrapes the site, reads back what it found for you to confirm, interviews you (your customer, their words, what you cannot claim), asks you to show it what you like and why, pulls real ads from the category, and renders a style gallery in the grammar of your references. You pick a direction. From then on a run is two actions: say "new batch," then click through the review gallery and paste the export.
 
 ## What you get per brand
 
-- `clients/{brand}/` with five context files the chain reuses forever: brand kit, brand guide, ICP with real customer language, rules that compound, reference and proof inventory
+- `clients/{brand}/` with six context files the chain reuses forever: brand kit, brand guide, ICP with real customer language, rules that compound, reference and proof inventory, and a taste file built from references you show it and your own words about why you like them. The engine assumes it knows nothing about your taste until you show it.
 - `ads/{brand}-{date}/` per run: every concept rendered at 4:5 for review, `copy.md` with the reader's pain in their words and headline variants, `manifest.json`, the review gallery
 - For everything you keep: the full placement set at 4:5, 1:1 and 9:16, plus a paired caption
 - With Paper Desktop open: every rendered concept also lands in a Paper file as an editable artboard, brand colours as design tokens, so a designer can fix taste by hand and export

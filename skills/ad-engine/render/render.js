@@ -289,11 +289,18 @@ async function prepareRender(page, ctx, r, res) {
   // back to Inter/system silently — the PNG still renders, the operator reviews the wrong typeface. Say so.
   // Detection by measurement (a locally installed face never appears in document.fonts): the family renders a probe
   // string at a different width than the generic fallback it is stacked on, or it is not there.
-  const fontStatus = await page.evaluate((fams) => fams.map(f => {
+  const fontStatus = await page.evaluate(async (fams) => {
     const probe = (stack) => { const s = document.createElement('span'); s.textContent = 'mmmmmmmmmmlllllllliiiiiiiiWWWWWWW0123456789'; s.style.cssText = `position:absolute;left:-9999px;top:-9999px;font-size:72px;font-family:${stack};white-space:nowrap`; document.body.appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; };
-    const loaded = probe(`"${f}", monospace`) !== probe('monospace') || probe(`"${f}", serif`) !== probe('serif');
-    return { family: f, loaded };
-  }), [...new Set([spec.brand?.font_display, spec.brand?.font_body, spec.brand?.font_mono].filter(Boolean))]);
+    const out = [];
+    for (const f of fams) {
+      // a locally installed face loads lazily on first use — ask for it explicitly before measuring, or the probe sees the fallback (flaky on the annotated batch, 2026-09-14)
+      try { await document.fonts.load(`400 72px "${f}"`); await document.fonts.load(`700 72px "${f}"`); } catch (e) {}
+      await new Promise(r => setTimeout(r, 30));
+      const loaded = probe(`"${f}", monospace`) !== probe('monospace') || probe(`"${f}", serif`) !== probe('serif');
+      out.push({ family: f, loaded });
+    }
+    return out;
+  }, [...new Set([spec.brand?.font_display, spec.brand?.font_body, spec.brand?.font_mono].filter(Boolean))]);
   for (const f of fontStatus) if (!f.loaded) res.warnings.push(`FONT: "${f.family}" did not load — rendered with a fallback face (check network / google_fonts / font_faces)`);
   const fit = await fitText(page);
   // __afterFit: layout that depends on FINAL fitted sizes (e.g. a table sized to the space the headline left)

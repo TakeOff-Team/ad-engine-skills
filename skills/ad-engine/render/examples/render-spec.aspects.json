@@ -22,7 +22,7 @@
       "aspect": "4:5",
       "slots": {
         "eyebrow": "For pool service companies",
-        "headline": "3\u20135 new pool accounts a month, <em>or you don't pay.</em>",
+        "headline": "3–5 new pool accounts a month, <em>or you don't pay.</em>",
         "subhead": "We run the ads, book the estimates, and follow up.",
         "cta": "Book a 15-min call",
         "footer": "northwind.co"
@@ -35,7 +35,7 @@
       "aspect": "1:1",
       "slots": {
         "eyebrow": "For pool service companies",
-        "headline": "3\u20135 new pool accounts a month, <em>or you don't pay.</em>",
+        "headline": "3–5 new pool accounts a month, <em>or you don't pay.</em>",
         "subhead": "We run the ads, book the estimates, and follow up.",
         "cta": "Book a 15-min call",
         "footer": "northwind.co"
@@ -48,7 +48,7 @@
       "aspect": "9:16",
       "slots": {
         "eyebrow": "For pool service companies",
-        "headline": "3\u20135 new pool accounts a month, <em>or you don't pay.</em>",
+        "headline": "3–5 new pool accounts a month, <em>or you don't pay.</em>",
         "subhead": "We run the ads, book the estimates, and follow up.",
         "cta": "Book a 15-min call",
         "footer": "northwind.co"
@@ -62,16 +62,16 @@
       "slots": {
         "eyebrow": "Client result",
         "big-number": "$124.4K",
-        "big-label": "in booked jobs \u00b7 first 30 days",
+        "big-label": "in booked jobs · first 30 days",
         "screenshot": "test-capture.png",
-        "screenshot-caption": "Jobber dashboard \u00b7 Aug 2026",
+        "screenshot-caption": "Jobber dashboard · Aug 2026",
         "metric-1-value": "41",
         "metric-1-label": "estimates booked",
         "metric-2-value": "$2,140",
         "metric-2-label": "avg ticket",
         "client-initials": "DR",
         "client-name": "Dana Reyes",
-        "client-role": "Clearwater Pools \u00b7 Tampa",
+        "client-role": "Clearwater Pools · Tampa",
         "cta": "Get results like Dana"
       }
     },
@@ -83,16 +83,16 @@
       "slots": {
         "eyebrow": "Client result",
         "big-number": "$124.4K",
-        "big-label": "in booked jobs \u00b7 first 30 days",
+        "big-label": "in booked jobs · first 30 days",
         "screenshot": "test-capture.png",
-        "screenshot-caption": "Jobber dashboard \u00b7 Aug 2026",
+        "screenshot-caption": "Jobber dashboard · Aug 2026",
         "metric-1-value": "41",
         "metric-1-label": "estimates booked",
         "metric-2-value": "$2,140",
         "metric-2-label": "avg ticket",
         "client-initials": "DR",
         "client-name": "Dana Reyes",
-        "client-role": "Clearwater Pools \u00b7 Tampa",
+        "client-role": "Clearwater Pools · Tampa",
         "cta": "Get results like Dana"
       }
     },
@@ -104,16 +104,16 @@
       "slots": {
         "eyebrow": "Client result",
         "big-number": "$124.4K",
-        "big-label": "in booked jobs \u00b7 first 30 days",
+        "big-label": "in booked jobs · first 30 days",
         "screenshot": "test-capture.png",
-        "screenshot-caption": "Jobber dashboard \u00b7 Aug 2026",
+        "screenshot-caption": "Jobber dashboard · Aug 2026",
         "metric-1-value": "41",
         "metric-1-label": "estimates booked",
         "metric-2-value": "$2,140",
         "metric-2-label": "avg ticket",
         "client-initials": "DR",
         "client-name": "Dana Reyes",
-        "client-role": "Clearwater Pools \u00b7 Tampa",
+        "client-role": "Clearwater Pools · Tampa",
         "cta": "Get results like Dana"
       }
     },
@@ -124,11 +124,11 @@
       "aspect": "4:5",
       "slots": {
         "result": "Fully booked through October.",
-        "quote": "\u201cWe went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark>.\u201d",
+        "quote": "“We went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark>.”",
         "client-initials": "MK",
         "client-name": "Marcus Klein",
         "client-role": "Owner, Bluewater Pool Care",
-        "source": "Google review \u00b7 Aug 2026"
+        "source": "Google review · Aug 2026"
       }
     },
     {
@@ -138,11 +138,11 @@
       "aspect": "1:1",
       "slots": {
         "result": "Fully booked through October.",
-        "quote": "\u201cWe went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark>.\u201d",
+        "quote": "“We went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark>.”",
         "client-initials": "MK",
         "client-name": "Marcus Klein",
         "client-role": "Owner, Bluewater Pool Care",
-        "source": "Google review \u00b7 Aug 2026"
+        "source": "Google review · Aug 2026"
       }
     },
     {
@@ -152,11 +152,11 @@
       "aspect": "9:16",
       "slots": {
         "result": "Fully booked through October.",
-        "quote": "\u201cWe went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark>.\u201d",
+        "quote": "“We went from chasing every lead to <mark>turning work away</mark>. The first estimate booked <mark>the same afternoon</mark>.”",
         "client-initials": "MK",
         "client-name": "Marcus Klein",
         "client-role": "Owner, Bluewater Pool Care",
-        "source": "Google review \u00b7 Aug 2026"
+        "source": "Google review · Aug 2026"
       }
     },
     {
@@ -167,7 +167,7 @@
       "slots": {
         "title": "Pool companies:",
         "date": "Today at 9:41 AM",
-        "body": "<p>I'll bring you 3\u20135 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract.</p>"
+        "body": "<p>I'll bring you 3–5 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract.</p>"
       }
     },
     {
@@ -178,7 +178,7 @@
       "slots": {
         "title": "Pool companies:",
         "date": "Today at 9:41 AM",
-        "body": "<p>I'll bring you 3\u20135 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract.</p>"
+        "body": "<p>I'll bring you 3–5 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract.</p>"
       }
     },
     {
@@ -189,7 +189,7 @@
       "slots": {
         "title": "Pool companies:",
         "date": "Today at 9:41 AM",
-        "body": "<p>I'll bring you 3\u20135 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract.</p>"
+        "body": "<p>I'll bring you 3–5 new service accounts a month, done-for-you.</p><p>You only pay me <b>after</b> the accounts are on your route.</p><p>No retainer. No 12-month contract.</p>"
       }
     },
     {
@@ -204,7 +204,7 @@
         "col-2": "With Northwind",
         "col-3": "Before",
         "rows": "<tr><td>Estimates / mo</td><td>41</td><td>9</td></tr><tr><td>Cost per estimate</td><td>$38</td><td>$140</td></tr><tr><td>Days to first booking</td><td>4</td><td>31</td></tr>",
-        "source": "Client dashboards \u00b7 Jan\u2013Aug 2026 \u00b7 with permission"
+        "source": "Client dashboards · Jan–Aug 2026 · with permission"
       }
     },
     {
@@ -219,7 +219,7 @@
         "col-2": "With Northwind",
         "col-3": "Before",
         "rows": "<tr><td>Estimates / mo</td><td>41</td><td>9</td></tr><tr><td>Cost per estimate</td><td>$38</td><td>$140</td></tr><tr><td>Days to first booking</td><td>4</td><td>31</td></tr>",
-        "source": "Client dashboards \u00b7 Jan\u2013Aug 2026 \u00b7 with permission"
+        "source": "Client dashboards · Jan–Aug 2026 · with permission"
       }
     },
     {
@@ -234,7 +234,7 @@
         "col-2": "With Northwind",
         "col-3": "Before",
         "rows": "<tr><td>Estimates / mo</td><td>41</td><td>9</td></tr><tr><td>Cost per estimate</td><td>$38</td><td>$140</td></tr><tr><td>Days to first booking</td><td>4</td><td>31</td></tr>",
-        "source": "Client dashboards \u00b7 Jan\u2013Aug 2026 \u00b7 with permission"
+        "source": "Client dashboards · Jan–Aug 2026 · with permission"
       }
     },
     {
@@ -245,7 +245,7 @@
       "slots": {
         "headline": "Sound familiar?",
         "capture": "test-capture.png",
-        "caption": "r/poolpros \u00b7 captured Sep 2026 (fixture)",
+        "caption": "r/poolpros · captured Sep 2026 (fixture)",
         "source": "Public post, username removed"
       }
     },
@@ -257,7 +257,7 @@
       "slots": {
         "headline": "Sound familiar?",
         "capture": "test-capture.png",
-        "caption": "r/poolpros \u00b7 captured Sep 2026 (fixture)",
+        "caption": "r/poolpros · captured Sep 2026 (fixture)",
         "source": "Public post, username removed"
       }
     },
@@ -269,7 +269,7 @@
       "slots": {
         "headline": "Sound familiar?",
         "capture": "test-capture.png",
-        "caption": "r/poolpros \u00b7 captured Sep 2026 (fixture)",
+        "caption": "r/poolpros · captured Sep 2026 (fixture)",
         "source": "Public post, username removed"
       }
     },
@@ -309,6 +309,45 @@
         "eyebrow": "For pool service companies",
         "headline": "Stop renting leads. <em>Own the phone call.</em>",
         "subhead": "We run the ads and book the estimates.",
+        "cta": "Book a call"
+      }
+    },
+    {
+      "id": "annot-45",
+      "template": "annotated-hero",
+      "file": "annotated-4x5.png",
+      "aspect": "4:5",
+      "slots": {
+        "headline": "pool leads on <em>autopilot</em>",
+        "object": "test-capture.png",
+        "note": "41 booked / mo",
+        "arrow": "on",
+        "cta": "Book a call"
+      }
+    },
+    {
+      "id": "annot-11",
+      "template": "annotated-hero",
+      "file": "annotated-1x1.png",
+      "aspect": "1:1",
+      "slots": {
+        "headline": "pool leads on <em>autopilot</em>",
+        "object": "test-capture.png",
+        "note": "41 booked / mo",
+        "arrow": "on",
+        "cta": "Book a call"
+      }
+    },
+    {
+      "id": "annot-916",
+      "template": "annotated-hero",
+      "file": "annotated-9x16.png",
+      "aspect": "9:16",
+      "slots": {
+        "headline": "pool leads on <em>autopilot</em>",
+        "object": "test-capture.png",
+        "note": "41 booked / mo",
+        "arrow": "on",
         "cta": "Book a call"
       }
     }

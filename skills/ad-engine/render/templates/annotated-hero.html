@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+  ad-engine / render / annotated-hero.html
+  FORMAT 9 — Annotated hero. "Made at a desk by a person": a grid-paper ground, one keyword that gets the treatment
+  (display face + a hand-drawn scribble underline in the brand colour), and a REAL object floating with a soft shadow —
+  a screenshot, a file card, a fan of real creatives — with optional desk annotations: a sticky note, a hand-drawn arrow,
+  a flourish mark, the founder cut out and pointing. Built 2026-09-14 from Remy Gaskell's YouTube thumbnail grammar
+  (taste.md, The AI Course) — the first template whose look came from the brand's own references instead of a stock layout.
+  Canvas: 1080×1350 default; 1:1 and 9:16 flex the object area.
+
+  TASTE RULE baked in: exactly ONE keyword wrapped in <em> gets the accent + scribble. Zero or two+ is flagged.
+  HARD RULE: the object is real (a capture, a photo, the brand's own authored card) — never a generated dashboard.
+
+  SLOTS
+    headline       required. Casual, lowercase reads best. Wrap ONE keyword/phrase in <em>. Auto-fits.
+    headline-face  (optional) "display" (default — whole line in the display face, like "the ultimate setup")
+                   | "body" (plain sans, only the <em> keyword in the display face — like "control room for skills")
+    object         (img, optional*) the hero object: screenshot / photo / real creative. Rendered as a floating card.
+    object-html    (HTML, optional*) an AUTHORED object instead of an image — a file card, a stack of cards, a mini list.
+                   *one of object / object-html should be present; the template warns when both are empty.
+    object-rotate  (optional) degrees, e.g. "-3" (default -2.5)
+    object-width   (optional) CSS width of the card, default "86%"
+    note           (optional) sticky-note text — short: "91 skills" / "reads the vault"
+    note-pos       (optional) tr | br (default) | bl | tl
+    arrow          (optional) "" none | "on" — a hand-drawn arrow from the headline toward the object
+    mark           (optional) "" none | "asterisk" — an accent flourish top-right
+    founder        (img, optional) a CUTOUT PNG (transparent background) of the founder, bottom-right, in front of the object
+    founder-height (optional) e.g. "46%" of canvas height (default)
+    cta            (optional) pill, bottom-left
+    disclaimer     (optional)
+    theme          (optional) "" dots (default) | "lines" | "plain" | "ink"
+    brand-name / logo   injected from spec.brand
+-->
+<style>
+  :root{ --brand-primary:#173EF5; --brand-accent:#FFB800; --brand-ink:#111111; --brand-paper:#FFFFFF; --brand-muted:#6B6B73;
+         --font-display:Inter,system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100vw;height:100vh;overflow:hidden}
+  body{background-color:var(--brand-paper);color:var(--brand-ink);font-family:var(--font-body);position:relative;
+       background-image:radial-gradient(circle, color-mix(in srgb,var(--brand-ink) 14%,transparent) 1.4px, transparent 1.6px);background-size:36px 36px;background-position:18px 18px}
+  body.theme-lines{background-image:linear-gradient(color-mix(in srgb,var(--brand-ink) 7%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--brand-ink) 7%,transparent) 1px,transparent 1px);background-size:44px 44px}
+  body.theme-plain{background-image:none}
+  body.theme-ink{background-color:var(--brand-ink);color:#fff;background-image:radial-gradient(circle, rgba(255,255,255,.16) 1.4px, transparent 1.6px)}
+
+  .frame{position:relative;z-index:1;height:100%;padding:60px 64px 56px;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:60px}
+  .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
+  .brand img{height:52px;width:auto;max-width:260px}
+  .brand img[src=""],.brand img:not([src]){display:none}
+  .mark{width:110px;height:110px;position:absolute;right:56px;top:150px;display:none;color:var(--brand-accent)}
+  body.mark-asterisk .mark{display:block}
+
+  .headline-box{height:min(33vh,470px);margin-top:28px;display:flex;align-items:flex-end;position:relative;flex-shrink:0}
+  .headline{font-family:var(--font-display);font-weight:900;font-size:calc(150px * var(--display-scale,1));line-height:var(--display-lh,.98);letter-spacing:-.03em;width:100%;text-wrap:balance;position:relative;z-index:2}
+  .headline em{font-style:normal;color:var(--brand-primary-text,var(--brand-primary));font-family:var(--font-display)}
+  body.theme-ink .headline em{color:var(--brand-accent-on-ink,var(--brand-accent))}
+  body.face-body .headline{font-family:var(--font-body);font-weight:800;letter-spacing:-.035em;font-size:128px;line-height:1.02}
+  body.face-body .headline em{font-family:var(--font-display);font-weight:900;font-size:calc(1em * var(--display-scale,1))}
+  .scribbles{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:visible}
+  .scribbles path{fill:none;stroke:var(--brand-primary);stroke-linecap:round;stroke-linejoin:round}
+  body.theme-ink .scribbles path{stroke:var(--brand-accent-on-ink,var(--brand-accent))}
+
+  .stage{flex:1;min-height:0;position:relative;margin-top:36px}
+  .object{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
+  .card{width:86%;max-height:100%;transform:rotate(-2.5deg);border-radius:18px;overflow:hidden;box-shadow:0 34px 70px rgba(0,0,0,.20),0 6px 14px rgba(0,0,0,.08);border:1.5px solid color-mix(in srgb,var(--brand-ink) 12%,transparent);background:#fff}
+  .card img{display:block;width:100%;height:auto;max-height:100%;object-fit:contain}
+  .card img[src=""],.card img:not([src]){display:none}
+  .card.empty{display:none}
+  .authored{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  /* authored object helpers — use inside object-html */
+  .file-card{background:#fff;border-radius:22px;padding:40px 48px;box-shadow:0 30px 60px rgba(0,0,0,.16),0 4px 10px rgba(0,0,0,.06);border:1.5px solid rgba(0,0,0,.08);font-family:var(--font-display);font-weight:900;font-size:calc(72px * var(--display-scale,1));line-height:var(--display-lh,.96);letter-spacing:-.01em;color:var(--brand-ink);white-space:nowrap}
+  .file-card small{display:block;font-family:var(--font-mono,var(--font-body));font-weight:600;font-size:24px;line-height:1.3;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-muted);margin-top:14px}
+  .file-card.body{font-family:var(--font-body);font-weight:700;font-size:44px;line-height:1.15;letter-spacing:-.02em;white-space:normal}
+  .file-card.body small{text-transform:none;letter-spacing:0;font-family:var(--font-body);font-weight:500;font-size:24px}
+  .founder-shift .authored{justify-content:flex-start;padding-left:2%}
+  .stack{position:relative;width:78%;height:100%}
+  .stack .file-card{position:absolute}
+  .no-object{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:60px;color:var(--brand-muted);font-size:26px;font-weight:600;border:2px dashed color-mix(in srgb,var(--brand-ink) 25%,transparent);border-radius:24px}
+  .stage.empty .no-object{display:flex}
+
+  .note{position:absolute;right:10px;bottom:10px;transform:rotate(4deg);background:#FFE86B;color:#1a1a1a;padding:26px 30px;min-width:190px;max-width:300px;
+        font-family:var(--font-body);font-weight:800;font-size:40px;line-height:1.05;text-align:center;box-shadow:0 18px 34px rgba(0,0,0,.18);z-index:4;letter-spacing:-.01em;text-wrap:balance}
+  .note.tr{bottom:auto;top:6px;transform:rotate(-3deg)} .note.bl{right:auto;left:10px;transform:rotate(-4deg)} .note.tl{right:auto;left:10px;bottom:auto;top:6px;transform:rotate(3deg)}
+  .arrow{position:absolute;left:8px;top:-34px;width:150px;height:110px;display:none;z-index:3}
+  body.arrow-on .arrow{display:block}
+  .arrow path{fill:none;stroke:var(--brand-primary);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .founder{position:absolute;right:-70px;bottom:-90px;height:88%;width:auto;z-index:5;display:block;filter:drop-shadow(0 20px 40px rgba(0,0,0,.22))}
+  .founder[src=""],.founder:not([src]){display:none}
+
+  .bottom{flex-shrink:0;margin-top:34px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;position:relative;z-index:6}
+  .cta{font-family:var(--font-display);font-weight:800;font-size:44px;padding:26px 44px;border-radius:999px;background:var(--brand-primary);color:var(--brand-on-primary,#fff);white-space:nowrap;box-shadow:0 14px 30px rgba(0,0,0,.14)}
+  .cta::after{content:" →"}
+  .disclaimer{font-size:17px;color:var(--brand-muted);letter-spacing:.01em}
+  body.theme-ink .disclaimer{color:rgba(255,255,255,.55)}
+</style>
+</head>
+<body>
+<svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><g stroke="currentColor" stroke-width="7" stroke-linecap="round"><path d="M50 8v84M8 50h84M20 20l60 60M80 20L20 80"/></g></svg>
+<div class="frame">
+  <div class="top">
+    <div class="brand"><img data-slot-src="logo" data-optional alt=""><span data-slot="brand-name" data-optional>Brand</span></div>
+  </div>
+
+  <div class="headline-box">
+    <svg class="scribbles" id="scribbles" aria-hidden="true"></svg>
+    <h1 class="headline" data-slot="headline" data-fit data-fit-min="56">the <em>ultimate</em> setup</h1>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="object">
+      <div class="card" id="card"><img data-slot-src="object" data-optional alt=""></div>
+    </div>
+    <div class="authored" data-slot="object-html" data-optional></div>
+    <div class="no-object">no object — the hero is a real thing: a screenshot, a photo, a real creative, or an authored card in <code>object-html</code></div>
+    <svg class="arrow" viewBox="0 0 150 110" aria-hidden="true"><path d="M6 12 C 40 4, 92 10, 118 62"/><path d="M96 54 L 120 66 L 124 40"/></svg>
+    <div class="note br" id="note" data-slot="note" data-optional>91 skills</div>
+    <img class="founder" data-slot-src="founder" data-optional alt="">
+  </div>
+
+  <div class="bottom">
+    <div class="cta" data-slot="cta" data-optional>Start building</div>
+    <div class="disclaimer" data-slot="disclaimer" data-optional></div>
+  </div>
+</div>
+<span data-slot="theme" data-optional hidden></span>
+<span data-slot="headline-face" data-optional hidden></span>
+<span data-slot="object-rotate" data-optional hidden></span>
+<span data-slot="object-width" data-optional hidden></span>
+<span data-slot="note-pos" data-optional hidden></span>
+<span data-slot="arrow" data-optional hidden></span>
+<span data-slot="mark" data-optional hidden></span>
+<span data-slot="founder-height" data-optional hidden></span>
+<script>
+  const slotText = n => ((document.querySelector(`[data-slot="${n}"]`)||{}).textContent || '').trim();
+  const sync = () => {
+    const theme = slotText('theme'); const face = slotText('headline-face'); const arrow = slotText('arrow'); const mark = slotText('mark');
+    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : ''].filter(Boolean).join(' ');
+    if (document.body.className !== cls) document.body.className = cls;
+    const card = document.getElementById('card'); const img = card.querySelector('img');
+    const hasImg = !!(img && img.getAttribute('src')); card.classList.toggle('empty', !hasImg);
+    const rot = slotText('object-rotate'); card.style.transform = `rotate(${rot !== '' ? parseFloat(rot) : -2.5}deg)`;
+    const w = slotText('object-width'); if (w) card.style.width = w;
+    const authored = document.querySelector('[data-slot="object-html"]'); const hasAuthored = authored && getComputedStyle(authored).display !== 'none' && authored.innerHTML.trim();
+    document.getElementById('stage').classList.toggle('empty', !hasImg && !hasAuthored);
+    const note = document.getElementById('note'); const pos = slotText('note-pos') || 'br'; note.className = 'note ' + pos;
+    const fh = slotText('founder-height'); const f = document.querySelector('.founder'); if (fh) f.style.height = fh;
+  };
+  // scribble underline: drawn AFTER fit settles, one stroke per rendered line of the <em> keyword (hand-drawn: two passes, slight wobble)
+  const drawScribbles = () => {
+    const svg = document.getElementById('scribbles'); svg.innerHTML = '';
+    const box = document.querySelector('.headline-box').getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`); svg.setAttribute('width', box.width); svg.setAttribute('height', box.height);
+    const h = document.querySelector('.headline'); const em = h.querySelector('em'); if (!em) return;
+    const fs = parseFloat(getComputedStyle(em).fontSize); const sw = Math.max(5, fs * 0.055);
+    let seed = 7; const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280 - .5; };
+    for (const r of em.getClientRects()) {
+      const x0 = r.left - box.left - fs * .06, x1 = r.right - box.left + fs * .04; const y = r.bottom - box.top - fs * .02;
+      const w = x1 - x0; const j = fs * .05;
+      const p1 = `M${x0} ${y + rnd()*j} C ${x0 + w*.25} ${y - j*1.2 + rnd()*j}, ${x0 + w*.6} ${y + j*1.4 + rnd()*j}, ${x1} ${y + rnd()*j}`;
+      const y2 = y + sw * 2.2; const x2 = x1 - w * .12, x3 = x0 + w * .35;
+      const p2 = `M${x2} ${y2 + rnd()*j} C ${x2 - w*.2} ${y2 + j*1.5}, ${x3 + w*.1} ${y2 - j}, ${x3} ${y2 + j*.6}`;
+      for (const [d, wdt] of [[p1, sw], [p2, sw * .8]]) { const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', d); path.setAttribute('stroke-width', wdt); svg.appendChild(path); }
+    }
+  };
+  window.__sync = sync; window.__afterFit = drawScribbles; sync(); drawScribbles();
+  window.__qa = function(){
+    const flags = [];
+    const ems = document.querySelectorAll('.headline em').length;
+    if (ems === 0) flags.push('TASTE: no <em> keyword in the headline — one keyword gets the treatment (pixel face + scribble); wrap it');
+    if (ems > 1) flags.push(`TASTE: ${ems} <em> runs in the headline — the references give ONE keyword the treatment, not ${ems}`);
+    if (document.getElementById('stage').classList.contains('empty')) flags.push('NO OBJECT — the hero is a real thing (screenshot / photo / real creative / authored card); the stage is empty');
+    const words = document.querySelector('.headline').textContent.trim().split(/\s+/).filter(Boolean).length;
+    if (words > 6) flags.push(`headline is ${words} words — the references run 2–5; cut`);
+    const f = document.querySelector('.founder'); if (f && f.getAttribute('src') && f.naturalWidth && !/\.png$/i.test(f.getAttribute('src'))) flags.push('founder image is not a PNG — a cutout with a transparent background is expected; a rectangular photo will look pasted on');
+    return flags;
+  };
+</script>
+</body>
+</html>
