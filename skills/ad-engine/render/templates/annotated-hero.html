@@ -51,7 +51,7 @@
   .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
   .brand img{height:52px;width:auto;max-width:260px}
   .brand img[src=""],.brand img:not([src]){display:none}
-  .mark{width:110px;height:110px;position:absolute;right:56px;top:150px;display:none;color:var(--brand-accent)}
+  .mark{width:84px;height:84px;position:absolute;right:64px;top:48px;display:none;color:var(--brand-accent)}   /* lives in the wordmark row — at 150px it collided with a wide headline (c05-r2) */
   body.mark-asterisk .mark{display:block}
 
   .headline-box{height:min(33vh,470px);margin-top:28px;display:flex;align-items:flex-end;position:relative;flex-shrink:0}
@@ -227,6 +227,7 @@
     { const sub = document.querySelector('.subhead'); const paths = [...document.querySelectorAll('.scribbles path')];
       if (sub && vis(sub) && paths.length) { const sr = sub.getBoundingClientRect(); const low = Math.max(...paths.map(p => p.getBoundingClientRect().bottom)); if (low > sr.top + 2) flags.push(`COLLISION: the scribble underline reaches ${Math.round(low - sr.top)}px into the subhead — shorten the headline or drop the subhead`); } }
     { const cta = document.querySelector('.cta'), fo = document.querySelector('.founder'); if (cta && vis(cta) && fo && vis(fo) && inter(cta.getBoundingClientRect(), fo.getBoundingClientRect()) > 400) flags.push('COLLISION: the CTA sits under the founder cutout — cta-pos: left, or raise the founder'); }
+    { const mk = document.querySelector('.mark'); const h = document.querySelector('.headline'); if (mk && getComputedStyle(mk).display !== 'none' && h) { const mr = mk.getBoundingClientRect(); const hit = [...h.getClientRects()].some(r => inter(mr, r) > 400); if (hit) flags.push('COLLISION: the flourish mark overlaps the headline — drop `mark` or shorten the line'); } }
     const f = document.querySelector('.founder'); if (f && f.getAttribute('src') && f.naturalWidth && !/\.png$/i.test(f.getAttribute('src'))) flags.push('founder image is not a PNG — a cutout with a transparent background is expected; a rectangular photo will look pasted on');
     return flags;
   };
