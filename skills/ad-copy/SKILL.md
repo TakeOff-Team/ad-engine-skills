@@ -30,7 +30,8 @@ Read `references/ad-copy-digest.md` once before writing (headline formulas and w
 
 | File | What you take from it |
 |---|---|
-| `icp.md` | **The raw material.** Who buys, the trigger, the anti-persona, and every VoC quote. VoC phrasing is the copy; you are arranging their words, not inventing yours |
+| `voc.md` | **The bank — read it first.** Every verbatim customer line the onboarding mined (calls, reviews, comments, community), tagged pain / desire / objection / trigger / outcome with source and stage, plus `## Their vocabulary` and `## Counts`. The headline's words come from here; `## Counts` decides which pain leads (what most people say, not what the founder says); `## Objections & hesitations` is where the risk-reversal and "but what about…" lines come from. Missing or `voc_confidence: low` → say so at the top of `copy.md` |
+| `icp.md` | **The persona + the load-bearing quotes.** Who buys, the trigger, the anti-persona, and every VoC quote. VoC phrasing is the copy; you are arranging their words, not inventing yours |
 | `brand-guide.md` | Tone words, what the brand never says, competitor names |
 | `rules.md` | `## Rules` (claims floor, banned claims), `## Default visual style` (text-on-image y/n, polish), `## Defaults` (headline variant count, stage preferences) |
 | `taste.md` | **The register on the image** — the digest's "voice on the image" line and the feel words. Remy's references are lowercase, casual, ≤ 6 words, one keyword marked; a headline that sounds like a template fails his taste even when the argument is right. Match the register they showed you; mark the ONE keyword with `<em>` for templates that give it the treatment |
@@ -44,7 +45,7 @@ If `icp.md` has no VoC quotes, say so at the top of `copy.md` and write from the
 
 **1. Stand where they stand.** One line: who is reading this, at what moment, in what mood. Not a persona label — a person. *"A roofing owner at 9pm, phone face-down, third week the schedule's had holes in it."*
 
-**2. Their pain, in their words.** Quote the VoC line closest to this angle, verbatim, with its source. This is the sentence the headline is going to beat.
+**2. Their pain, in their words.** Quote the `voc.md` line closest to this angle, verbatim, with its source — and check `## Counts`: if three people said it one way, that is the way. For a most-aware / offer angle, take the line from `## Objections & hesitations` instead: the headline answers the objection they actually raised. This is the sentence the headline is going to beat.
 
 **3. Their pain, said better than they can.** Run the So-What chain down from the feature to the thing they actually feel or lose. Quantify it when the inventory allows (`references.md`), make it a scene when it doesn't. Write the one line that makes them think *"that's exactly it."* This line is the seed of every headline variant — not the offer.
 
