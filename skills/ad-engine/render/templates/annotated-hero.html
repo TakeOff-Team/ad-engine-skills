@@ -16,6 +16,7 @@
 
   SLOTS
     headline       required. Casual, lowercase reads best. Wrap ONE keyword/phrase in <em>. Auto-fits.
+    subhead        (optional) one line of context under the headline, plain sans — the operator asked for it on the 09-14 batch ("more context about the AI system")
     headline-face  (optional) "display" (default — whole line in the display face, like "the ultimate setup")
                    | "body" (plain sans, only the <em> keyword in the display face — like "control room for skills")
     object         (img, optional*) the hero object: screenshot / photo / real creative. Rendered as a floating card.
@@ -63,6 +64,8 @@
   .scribbles path{fill:none;stroke:var(--brand-primary);stroke-linecap:round;stroke-linejoin:round}
   body.theme-ink .scribbles path{stroke:var(--brand-accent-on-ink,var(--brand-accent))}
 
+  .subhead{margin-top:22px;font-family:var(--font-body);font-weight:500;font-size:34px;line-height:1.25;letter-spacing:-.01em;color:var(--brand-ink);opacity:.82;max-width:92%;flex-shrink:0}
+  body.theme-ink .subhead{color:#fff}
   .stage{flex:1;min-height:0;position:relative;margin-top:36px}
   .object{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
   .card{width:86%;max-height:100%;transform:rotate(-2.5deg);border-radius:18px;overflow:hidden;box-shadow:0 34px 70px rgba(0,0,0,.20),0 6px 14px rgba(0,0,0,.08);border:1.5px solid color-mix(in srgb,var(--brand-ink) 12%,transparent);background:#fff}
@@ -108,6 +111,7 @@
     <svg class="scribbles" id="scribbles" aria-hidden="true"></svg>
     <h1 class="headline" data-slot="headline" data-fit data-fit-min="56">the <em>ultimate</em> setup</h1>
   </div>
+  <p class="subhead" data-slot="subhead" data-optional>one line of context under the headline.</p>
 
   <div class="stage" id="stage">
     <div class="object">
