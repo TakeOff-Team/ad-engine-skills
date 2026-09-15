@@ -179,12 +179,25 @@
       for (const [d, wdt] of [[p1, sw], [p2, sw * .8]]) { const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', d); path.setAttribute('stroke-width', wdt); svg.appendChild(path); }
     }
   };
-  window.__sync = sync; window.__afterFit = drawScribbles; sync(); drawScribbles();
+  // an authored object taller than the stage (a long quote at 1:1) is centred and spills UP over the subhead/headline —
+  // shrink its type until it fits, the way data-fit does for headlines (c06 at 1:1 and c01-r1, 2026-09-14)
+  const fitAuthored = () => {
+    const box = document.querySelector('.authored'); if (!box || getComputedStyle(box).display === 'none') return;
+    const kid = box.firstElementChild; if (!kid) return;
+    kid.style.fontSize = ''; kid.querySelectorAll('[style*="font-size"]').forEach(el => { if (!el.dataset.fs0) el.dataset.fs0 = getComputedStyle(el).fontSize; el.style.fontSize = el.dataset.fs0; });
+    let guard = 0;
+    const over = () => { const b = box.getBoundingClientRect(), k = kid.getBoundingClientRect(); return k.top < b.top - 2 || k.bottom > b.bottom + 2 || k.left < b.left - 2 || k.right > b.right + 2; };
+    while (over() && guard++ < 24) {
+      for (const el of [kid, ...kid.querySelectorAll('*')]) { const fs = parseFloat(getComputedStyle(el).fontSize); if (fs > 14) el.style.fontSize = (fs * 0.94) + 'px'; }
+    }
+  };
+  window.__sync = sync; window.__afterFit = () => { fitAuthored(); drawScribbles(); }; sync(); fitAuthored(); drawScribbles();
   window.__qa = function(){
     const flags = [];
     const ems = document.querySelectorAll('.headline em').length;
     if (ems === 0) flags.push('TASTE: no <em> keyword in the headline — one keyword gets the treatment (pixel face + scribble); wrap it');
     if (ems > 1) flags.push(`TASTE: ${ems} <em> runs in the headline — the references give ONE keyword the treatment, not ${ems}`);
+    { const box = document.querySelector('.authored'); const kid = box && box.firstElementChild; if (kid && getComputedStyle(box).display !== 'none') { const b = box.getBoundingClientRect(), k = kid.getBoundingClientRect(); if (k.top < b.top - 4 || k.bottom > b.bottom + 4) flags.push(`OVERFLOW: the authored object is ${Math.round(k.height - b.height)}px taller than its stage even after shrinking — cut the text or drop the subhead`); } }
     if (document.getElementById('stage').classList.contains('empty')) flags.push('NO OBJECT — the hero is a real thing (screenshot / photo / real creative / authored card); the stage is empty');
     const words = document.querySelector('.headline').textContent.trim().split(/\s+/).filter(Boolean).length;
     if (words > 6) flags.push(`headline is ${words} words — the references run 2–5; cut`);
