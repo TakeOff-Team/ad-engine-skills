@@ -45,7 +45,7 @@ If `icp.md` has no VoC quotes, say so at the top of `copy.md` and write from the
 
 **1. Stand where they stand.** One line: who is reading this, at what moment, in what mood. Not a persona label — a person. *"A roofing owner at 9pm, phone face-down, third week the schedule's had holes in it."*
 
-**2. Their pain, in their words.** Quote the `voc.md` line closest to this angle, verbatim, with its source — and check `## Counts`: if three people said it one way, that is the way. For a most-aware / offer angle, take the line from `## Objections & hesitations` instead: the headline answers the objection they actually raised. This is the sentence the headline is going to beat.
+**2. Their pain, in their words.** Quote the `voc.md` line closest to this angle, verbatim, with its source — and check `## Counts`: if three people said it one way, that is the way. For a most-aware / offer angle, take the line from `## Objections & hesitations` instead: the headline answers the objection they actually raised. When `## Pain overlap` shows a pain both the founder and the customers name, lead with it; a founder-only pain gets at most one variant (it is a hypothesis); a customer-only pain the founder never listed is the batch's wildcard-worthy angle. This is the sentence the headline is going to beat.
 
 **3. Their pain, said better than they can.** Run the So-What chain down from the feature to the thing they actually feel or lose. Quantify it when the inventory allows (`references.md`), make it a scene when it doesn't. Write the one line that makes them think *"that's exactly it."* This line is the seed of every headline variant — not the offer.
 
