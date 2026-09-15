@@ -106,8 +106,27 @@
   #fallback b{font-size:13px}
   #fallback textarea{flex:1;min-height:200px}
   #fallback .close{padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
-  #lightbox{display:none;position:fixed;inset:0;background:rgba(29,29,31,0);backdrop-filter:blur(14px);z-index:90;cursor:zoom-out;align-items:center;justify-content:center}
-  #lightbox img{max-width:94vw;max-height:94vh;object-fit:contain;will-change:transform,opacity;border-radius:8px}
+  /* review lightbox: image left, the card's decision + note on the right, arrows/keys to step (operator, 2026-09-14) */
+  #lightbox{display:none;position:fixed;inset:0;background:rgba(29,29,31,0);backdrop-filter:blur(14px);z-index:90;cursor:zoom-out;align-items:stretch;justify-content:center;gap:18px;padding:22px}
+  .lb-stage{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px}
+  #lightbox img{max-width:calc(100% - 100px);max-height:calc(100vh - 44px);object-fit:contain;will-change:transform,opacity;border-radius:8px;cursor:default}
+  .lb-nav{width:40px;height:40px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;cursor:pointer;flex-shrink:0;transition:background 150ms,transform 100ms}
+  .lb-nav:hover{background:rgba(255,255,255,.24)} .lb-nav:active{transform:scale(.94)} .lb-nav[disabled]{opacity:.25;cursor:default}
+  #lbpanel{width:340px;flex-shrink:0;background:#fff;border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px;cursor:default;box-shadow:0 20px 60px rgba(0,0,0,.35);align-self:center;max-height:calc(100vh - 44px);overflow:auto;border:2px solid transparent}
+  #lbpanel.keep{border-color:var(--keep)} #lbpanel.revise{border-color:var(--revise)} #lbpanel.kill{border-color:var(--kill)}
+  .lb-top{display:flex;align-items:center;justify-content:space-between}
+  .lb-pos{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .lb-close{border:none;background:rgba(0,0,0,.06);width:28px;height:28px;border-radius:999px;cursor:pointer;font-size:12px;color:var(--dim)}
+  .lb-angle{font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--accent)} .lb-angle:empty{display:none}
+  .lb-label{font-size:14px;font-weight:600;line-height:1.35} .lb-label .id{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--faint);background:rgba(0,0,0,.05);padding:2px 6px;border-radius:6px;margin-right:4px}
+  .lb-meta{font-size:12px;color:#8A6D1A;background:#FDF7E7;border-radius:8px;padding:7px 9px;line-height:1.45} .lb-meta:empty{display:none}
+  .lb-status{font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;display:none;width:max-content}
+  #lbpanel.keep .lb-status{display:block;background:var(--keep-soft);color:var(--keep)} #lbpanel.revise .lb-status{display:block;background:var(--revise-soft);color:var(--revise)} #lbpanel.kill .lb-status{display:block;background:var(--kill-soft);color:var(--kill)}
+  #lbpanel.ref .lb-actions,#lbpanel.ref .lb-note,#lbpanel.ref .lb-status{display:none}
+  .lb-note{min-height:96px;resize:vertical;font:inherit;font-size:12.5px;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:#FAFAFB}
+  .lb-note.needs{border-color:var(--revise)}
+  .lb-keys{font-size:10.5px;color:var(--faint);line-height:1.5}
+  @media (max-width:820px){ #lightbox{flex-direction:column;padding:12px} #lbpanel{width:auto;align-self:stretch;max-height:46vh} #lightbox img{max-height:48vh;max-width:calc(100% - 90px)} }
   @media (prefers-reduced-motion: reduce){
     .card.enter{animation:cardFade 180ms ease both}
     @keyframes cardFade{from{opacity:0}to{opacity:1}}
@@ -136,7 +155,19 @@
   <span class="hint">Click image to zoom · hover a card and press <b>K</b> keep · <b>C</b> change · <b>X</b> kill · <b>Keep</b> ships as-is · <b>Change</b> = right idea, re-render with your note · <b>Kill</b> = note becomes a permanent rule · notes autosave</span>
   <button id="export">Export selections</button>
 </footer>
-<div id="lightbox"><img id="lightimg" alt=""></div>
+<div id="lightbox">
+  <div class="lb-stage"><button class="lb-nav prev" title="Previous (←)" onclick="event.stopPropagation();lbNav(-1)">‹</button><img id="lightimg" alt="" onclick="event.stopPropagation()"><button class="lb-nav next" title="Next (→)" onclick="event.stopPropagation();lbNav(1)">›</button></div>
+  <aside id="lbpanel" onclick="event.stopPropagation()">
+    <div class="lb-top"><span class="lb-pos"></span><button class="lb-close" title="Close (Esc)" onclick="closeLightbox()">✕</button></div>
+    <div class="lb-angle"></div>
+    <div class="lb-label"><span class="id"></span> <span class="lb-text"></span></div>
+    <div class="lb-meta"></div>
+    <div class="lb-status"></div>
+    <div class="actions lb-actions"><button class="bk">✓ Keep</button><button class="br">↻ Change</button><button class="bx">✕ Kill</button></div>
+    <textarea class="lb-note" placeholder="Notes…"></textarea>
+    <div class="lb-keys">← → next / previous · K keep · C change · X kill · Esc close</div>
+  </aside>
+</div>
 <div id="fallback"><div class="box"><b>Copy this JSON and paste it back to Claude:</b><textarea id="fbtext" readonly onclick="this.select()"></textarea><button class="close" onclick="document.getElementById('fallback').style.display='none'">Close</button></div></div>
 
 <script>
@@ -238,13 +269,13 @@ function render(){
         <textarea>${note}</textarea>
         <div class="noteflag">↻ Add a note so the re-render knows what to fix</div>
       </div>`;
-    card.querySelector("img").onclick=e=>openLightbox(it.src, e.target);
+    card.querySelector("img").onclick=e=>openLightbox(it.id, e.target);
     card.querySelector(".bk").onclick=()=>setD(it.id,"keep");
     card.querySelector(".br").onclick=()=>setD(it.id,"revise");
     card.querySelector(".bx").onclick=()=>setD(it.id,"kill");
     card.querySelector("textarea").oninput=e=>{
       state[it.id]=state[it.id]||{}; state[it.id].n=e.target.value; save();
-      paintCard(card, it);
+      paintCard(card, it); if(lbId===it.id) paintPanel();
     };
     paintCard(card, it);
     g.appendChild(card);
@@ -259,6 +290,7 @@ function setD(id,d){
   const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
   const it = DATA.items.find(x=>x.id===id);
   const now = decision(id);
+  if(lbId===id) paintPanel();
   if(card && it){
     if(filter!=="all" && filter!==now){
       /* Card no longer matches the filter — let it leave, then rebuild. */
@@ -285,10 +317,34 @@ function delta(img, r){
     s: Math.max(.12, Math.min(r.width/ir.width, r.height/ir.height))
   };
 }
-function openLightbox(src, fromEl){
+let lbId = null;
+function lbItems(){ return [...document.querySelectorAll(".card")].map(c=>c.dataset.id); }   // what is on screen, in order, filter respected
+function lbItem(){ return DATA.items.find(x=>x.id===lbId); }
+function paintPanel(){
+  const it=lbItem(); if(!it) return;
+  const P=document.getElementById("lbpanel"), d=decision(it.id), note=(state[it.id]&&state[it.id].n)||"", isRef=it.kind==="reference";
+  P.className = isRef ? "ref" : (d!=="und"?d:"");
+  const ids=lbItems(), i=ids.indexOf(lbId);
+  P.querySelector(".lb-pos").textContent = `${i+1} / ${ids.length}`;
+  const a=angleOf(it); P.querySelector(".lb-angle").textContent = isRef ? "Reference · context only" : (a ? (a.name||a.id) : "");
+  P.querySelector(".lb-label .id").textContent = it.id; P.querySelector(".lb-text").textContent = it.label||"";
+  P.querySelector(".lb-meta").textContent = it.meta||"";
+  P.querySelector(".lb-status").textContent = d==="keep"?"Keep":d==="revise"?"Change":d==="kill"?"Kill":"";
+  const ta=P.querySelector(".lb-note"); if(document.activeElement!==ta) ta.value=note; ta.placeholder=ph(d); ta.classList.toggle("needs", d==="revise"&&!note.trim());
+  document.querySelector(".lb-nav.prev").disabled = i<=0; document.querySelector(".lb-nav.next").disabled = i>=ids.length-1;
+}
+function lbShow(id, fromEl){
+  lbId=id; const it=lbItem(); const img=document.getElementById("lightimg");
+  if(fromEl) lbSource=fromEl; else { const c=document.querySelector(`.card[data-id="${CSS.escape(id)}"] img`); if(c) lbSource=c; }
+  if(img.src!==new URL(it.src, location.href).href){ if(!REDUCED){ img.animate([{opacity:.4},{opacity:1}],{duration:180,easing:"ease-out"}); } img.src=it.src; }
+  paintPanel();
+  const card=document.querySelector(`.card[data-id="${CSS.escape(id)}"]`); if(card) card.scrollIntoView({block:"nearest",behavior:REDUCED?"auto":"smooth"});
+}
+function lbNav(dir){ const ids=lbItems(); const i=ids.indexOf(lbId)+dir; if(i<0||i>=ids.length) return; lbShow(ids[i]); }
+function openLightbox(id, fromEl){
   const lb=document.getElementById("lightbox"), img=document.getElementById("lightimg");
   lbSource = fromEl;
-  img.src=src; lb.style.display="flex";
+  const it=DATA.items.find(x=>x.id===id); lbId=id; img.src=it.src; lb.style.display="flex"; paintPanel();
   if(REDUCED){ lb.style.background="rgba(29,29,31,.92)"; return; }
   requestAnimationFrame(()=>{
     const r=fromEl.getBoundingClientRect(), m=delta(img,r);
@@ -302,6 +358,7 @@ function openLightbox(src, fromEl){
 function closeLightbox(){
   const lb=document.getElementById("lightbox"), img=document.getElementById("lightimg");
   if(lb.style.display!=="flex") return;
+  const closingId=lbId; lbId=null;
   if(REDUCED || !lbSource || !lbSource.isConnected){ lb.style.display="none"; lb.style.background="rgba(29,29,31,0)"; return; }
   const r=lbSource.getBoundingClientRect(), m=delta(img,r);
   lb.animate([{background:"rgba(29,29,31,.92)"},{background:"rgba(29,29,31,0)"}],{duration:240,easing:"ease-in",fill:"forwards"});
@@ -310,7 +367,14 @@ function closeLightbox(){
     {transform:`translate(${m.dx}px,${m.dy}px) scale(${m.s})`,opacity:0}
   ],{duration:240,easing:"cubic-bezier(.3,.7,.4,1)"}).onfinish=()=>{lb.style.display="none"};
 }
-document.getElementById("lightbox").onclick=closeLightbox;
+document.getElementById("lightbox").onclick=e=>{ if(e.target.id==="lightbox"||e.target.classList.contains("lb-stage")) closeLightbox(); };
+(function(){ const P=document.getElementById("lbpanel");
+  P.querySelector(".bk").onclick=()=>{ if(lbId) setD(lbId,"keep"); };
+  P.querySelector(".br").onclick=()=>{ if(lbId) setD(lbId,"revise"); };
+  P.querySelector(".bx").onclick=()=>{ if(lbId) setD(lbId,"kill"); };
+  P.querySelector(".lb-note").oninput=e=>{ if(!lbId) return; state[lbId]=state[lbId]||{}; state[lbId].n=e.target.value; save();
+    const card=document.querySelector(`.card[data-id="${CSS.escape(lbId)}"]`); const it=lbItem(); if(card&&it){ const ta=card.querySelector("textarea"); if(ta) ta.value=e.target.value; paintCard(card,it); } paintPanel(); };
+})();
 
 document.getElementById("filters").onclick=e=>{
   if(!e.target.dataset.f) return;
@@ -319,10 +383,13 @@ document.getElementById("filters").onclick=e=>{
   render();
 };
 document.addEventListener("keydown",e=>{
-  if(e.target.tagName==="TEXTAREA") return;
-  if(hovered && (e.key==="k"||e.key==="K")) setD(hovered,"keep");
-  if(hovered && (e.key==="c"||e.key==="C")) setD(hovered,"revise");
-  if(hovered && (e.key==="x"||e.key==="X")) setD(hovered,"kill");
+  if(e.target.tagName==="TEXTAREA"){ if(e.key==="Escape") e.target.blur(); return; }
+  if(lbId && e.key==="ArrowRight"){ e.preventDefault(); lbNav(1); return; }
+  if(lbId && e.key==="ArrowLeft"){ e.preventDefault(); lbNav(-1); return; }
+  const target = lbId || hovered;
+  if(target && (e.key==="k"||e.key==="K")) setD(target,"keep");
+  if(target && (e.key==="c"||e.key==="C")) setD(target,"revise");
+  if(target && (e.key==="x"||e.key==="X")) setD(target,"kill");
   if(e.key==="Escape"){closeLightbox();document.getElementById("fallback").style.display="none"}
 });
 document.getElementById("export").onclick=async()=>{
