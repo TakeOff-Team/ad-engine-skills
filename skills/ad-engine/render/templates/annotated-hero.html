@@ -239,7 +239,7 @@
     const vis = el => el && getComputedStyle(el).display !== 'none' && el.getClientRects().length;
     const inter = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     const textLeaves = [...document.querySelectorAll('.authored *')].filter(el => vis(el) && el.children.length === 0 && el.textContent.trim());
-    const cardImg = document.querySelector('.card img'); if (cardImg && vis(cardImg)) textLeaves.push(cardImg);
+    // an image object is allowed to have a note tucked over its corner (that IS the reference grammar) — only TEXT counts as covered
     for (const [name, el] of [['sticky note', document.getElementById('note')], ['founder cutout', document.querySelector('.founder')]]) {
       if (!vis(el)) continue; const r = el.getBoundingClientRect();
       const hit = textLeaves.filter(t => inter(r, t.getBoundingClientRect()) > 400);

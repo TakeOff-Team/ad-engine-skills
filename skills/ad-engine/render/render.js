@@ -207,7 +207,16 @@ async function visualQA(page) {
       if (!vis(el) || !el.textContent.trim()) return;
       const name = el.dataset.slot || el.tagName.toLowerCase();
       const r = el.getBoundingClientRect(), p = el.parentElement ? el.parentElement.getBoundingClientRect() : r;
-      const ow = el.scrollWidth - el.clientWidth;                        // horizontal: nowrap text wider than its cell
+      // a visible-overflow container of positioned children (an authored object stack) is not 'clipped' when a child leaves
+      // its box — it is clipped when a child leaves the CANVAS. Text elements keep the strict scrollWidth check.
+      const cs = getComputedStyle(el); const ownText = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+      let ow = el.scrollWidth - el.clientWidth;                          // horizontal: nowrap text wider than its cell
+      if (cs.overflow === 'visible' && !ownText && el.children.length) {
+        const kids = [...el.querySelectorAll('*')].filter(vis).map(k => k.getBoundingClientRect());
+        const off = kids.some(k => k.right > VW + 2 || k.left < -2 || k.bottom > VH + 2 || k.top < -2);
+        ow = off ? 999 : 0;
+        if (off) { out.push(`OVERFLOW: "${name}" has content outside the canvas — the object is too big for the stage`); return; }
+      }
       const spillY = Math.max(r.bottom - p.bottom, r.bottom - VH);       // vertical: past the parent box or off the canvas
       const spillX = Math.max(r.right - VW, 0);
       if (ow > 3) out.push(`OVERFLOW: "${name}" is ${ow}px wider than its box — text is clipped or colliding`);
