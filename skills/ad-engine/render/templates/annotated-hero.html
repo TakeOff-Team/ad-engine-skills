@@ -30,7 +30,7 @@
     mark           (optional) "" none | "asterisk" — an accent flourish top-right
     founder        (img, optional) a CUTOUT PNG (transparent background) of the founder, bottom-right, in front of the object
     founder-height (optional) e.g. "46%" of canvas height (default)
-    cta            (optional) pill, bottom-left
+    cta            (optional) pill, bottom-RIGHT by default (rev-2); cta-pos: "left" to keep it left
     disclaimer     (optional)
     theme          (optional) "" dots (default) | "lines" | "plain" | "ink"
     brand-name / logo   injected from spec.brand
@@ -64,7 +64,13 @@
   .scribbles path{fill:none;stroke:var(--brand-primary);stroke-linecap:round;stroke-linejoin:round}
   body.theme-ink .scribbles path{stroke:var(--brand-accent-on-ink,var(--brand-accent))}
 
-  .subhead{margin-top:22px;font-family:var(--font-body);font-weight:500;font-size:34px;line-height:1.25;letter-spacing:-.01em;color:var(--brand-ink);opacity:.82;max-width:92%;flex-shrink:0}
+  .subhead{margin-top:22px;font-family:var(--font-body);font-weight:500;font-size:42px;line-height:1.22;letter-spacing:-.015em;color:var(--brand-ink);opacity:.86;max-width:94%;flex-shrink:0}
+  /* rev-2 lessons (The AI Course, 2026-09-14): the scribble sat on the subhead on 6/6 cards — with a subhead the headline box is content-height (everything moves up),
+     the headline steps down one size to make room, and the subhead clears the scribble's depth */
+  body.has-subhead .headline-box{height:auto;min-height:0;align-items:flex-start;margin-top:36px}
+  body.has-subhead .headline{font-size:calc(132px * var(--display-scale,1))}
+  body.has-subhead .subhead{margin-top:48px}
+  body.has-subhead .stage{margin-top:30px}
   body.theme-ink .subhead{color:#fff}
   .stage{flex:1;min-height:0;position:relative;margin-top:36px}
   .object{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
@@ -84,11 +90,11 @@
   .no-object{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:60px;color:var(--brand-muted);font-size:26px;font-weight:600;border:2px dashed color-mix(in srgb,var(--brand-ink) 25%,transparent);border-radius:24px}
   .stage.empty .no-object{display:flex}
   /* overlays reserve their own room — a sticky note or the founder never sits over the object's text (rev-1 lesson, 2026-09-14) */
-  .stage.has-note-br .object,.stage.has-note-br .authored{right:230px;bottom:70px}
+  .stage.has-note-br .object,.stage.has-note-br .authored{right:150px;bottom:44px}
   .stage.has-note-bl .object,.stage.has-note-bl .authored{left:230px;bottom:70px}
-  .stage.has-note-tr .object,.stage.has-note-tr .authored{right:230px;top:70px}
+  .stage.has-note-tr .object,.stage.has-note-tr .authored{right:150px;top:44px}
   .stage.has-note-tl .object,.stage.has-note-tl .authored{left:230px;top:70px}
-  .stage.has-founder .object,.stage.has-founder .authored{right:36%}
+  .stage.has-founder .object,.stage.has-founder .authored{right:42%}
   .stage.has-founder.has-note-br .authored,.stage.has-founder.has-note-br .object{right:36%;bottom:0}
 
   .note{position:absolute;right:10px;bottom:10px;transform:rotate(4deg);background:#FFE86B;color:#1a1a1a;padding:26px 30px;min-width:190px;max-width:300px;
@@ -97,11 +103,15 @@
   .arrow{position:absolute;left:8px;top:-34px;width:150px;height:110px;display:none;z-index:3}
   body.arrow-on .arrow{display:block}
   .arrow path{fill:none;stroke:var(--brand-primary);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
-  .founder{position:absolute;right:-70px;bottom:-90px;height:88%;width:auto;z-index:5;display:block;filter:drop-shadow(0 20px 40px rgba(0,0,0,.22))}
+  .founder{position:absolute;right:-56px;bottom:-24px;height:92%;width:auto;z-index:5;display:block;filter:drop-shadow(0 20px 40px rgba(0,0,0,.22))}
+  /* founder + CTA both on the right: the stage ends above the CTA row, so the cutout's base sits over the row's top edge, never on the button */
+  body.has-founder .stage{margin-bottom:26px}
   .founder[src=""],.founder:not([src]){display:none}
 
   .bottom{flex-shrink:0;margin-top:34px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;position:relative;z-index:6}
-  .cta{font-family:var(--font-display);font-weight:800;font-size:44px;padding:26px 44px;border-radius:999px;background:var(--brand-primary);color:var(--brand-on-primary,#fff);white-space:nowrap;box-shadow:0 14px 30px rgba(0,0,0,.14)}
+  .cta{font-family:var(--font-display);font-weight:800;font-size:54px;padding:28px 52px;border-radius:999px;background:var(--brand-primary);color:var(--brand-on-primary,#fff);white-space:nowrap;box-shadow:0 14px 30px rgba(0,0,0,.14)}
+  .bottom{flex-direction:row-reverse}            /* CTA bottom-right (operator, rev-2); disclaimer sits bottom-left */
+  body.cta-left .bottom{flex-direction:row}
   .cta::after{content:" →"}
   .disclaimer{font-size:17px;color:var(--brand-muted);letter-spacing:.01em}
   body.theme-ink .disclaimer{color:rgba(255,255,255,.55)}
@@ -144,11 +154,13 @@
 <span data-slot="arrow" data-optional hidden></span>
 <span data-slot="mark" data-optional hidden></span>
 <span data-slot="founder-height" data-optional hidden></span>
+<span data-slot="cta-pos" data-optional hidden></span>
 <script>
   const slotText = n => ((document.querySelector(`[data-slot="${n}"]`)||{}).textContent || '').trim();
   const sync = () => {
     const theme = slotText('theme'); const face = slotText('headline-face'); const arrow = slotText('arrow'); const mark = slotText('mark');
-    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : ''].filter(Boolean).join(' ');
+    const sub = document.querySelector('[data-slot="subhead"]'); const hasSub = sub && getComputedStyle(sub).display !== 'none' && sub.textContent.trim();
+    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : '', hasSub ? 'has-subhead' : '', slotText('cta-pos') === 'left' ? 'cta-left' : '', (document.querySelector('.founder')||{}).getAttribute && document.querySelector('.founder').getAttribute('src') ? 'has-founder' : ''].filter(Boolean).join(' ');
     if (document.body.className !== cls) document.body.className = cls;
     const card = document.getElementById('card'); const img = card.querySelector('img');
     const hasImg = !!(img && img.getAttribute('src')); card.classList.toggle('empty', !hasImg);
@@ -212,6 +224,9 @@
       const hit = textLeaves.filter(t => inter(r, t.getBoundingClientRect()) > 400);
       if (hit.length) flags.push(`COLLISION: ${name} covers ${hit.length} text element(s) of the object ("${hit[0].textContent.trim().slice(0, 30)}…") — move note-pos / shrink the card / drop the note`);
     }
+    { const sub = document.querySelector('.subhead'); const paths = [...document.querySelectorAll('.scribbles path')];
+      if (sub && vis(sub) && paths.length) { const sr = sub.getBoundingClientRect(); const low = Math.max(...paths.map(p => p.getBoundingClientRect().bottom)); if (low > sr.top + 2) flags.push(`COLLISION: the scribble underline reaches ${Math.round(low - sr.top)}px into the subhead — shorten the headline or drop the subhead`); } }
+    { const cta = document.querySelector('.cta'), fo = document.querySelector('.founder'); if (cta && vis(cta) && fo && vis(fo) && inter(cta.getBoundingClientRect(), fo.getBoundingClientRect()) > 400) flags.push('COLLISION: the CTA sits under the founder cutout — cta-pos: left, or raise the founder'); }
     const f = document.querySelector('.founder'); if (f && f.getAttribute('src') && f.naturalWidth && !/\.png$/i.test(f.getAttribute('src'))) flags.push('founder image is not a PNG — a cutout with a transparent background is expected; a rectangular photo will look pasted on');
     return flags;
   };

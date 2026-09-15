@@ -93,6 +93,14 @@
   .angle-head.refs{opacity:.75}
   .refs-toggle{margin-left:auto;font:inherit;font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
   .refs-toggle:active{transform:scale(.97)}
+  /* general + per-angle notes (operator, 2026-09-14: "I was making a lot of the same comments — I shouldn't have to repeat myself") */
+  .general-notes{grid-column:1/-1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--card-shadow)}
+  .general-notes .gtitle{font-size:13px;font-weight:700}
+  .general-notes .ghint{font-size:11.5px;color:var(--faint)}
+  .general-notes textarea{min-height:64px;resize:vertical;font:inherit;font-size:13px;line-height:1.45;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#FAFAFB}
+  .angle-head .anote{flex-basis:100%;margin-top:6px}
+  .angle-head .anote textarea{width:100%;min-height:34px;resize:vertical;font:inherit;font-size:12.5px;line-height:1.4;padding:7px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent}
+  .angle-head .anote textarea:focus,.angle-head .anote textarea:not(:placeholder-shown){background:#fff;border-style:solid}
   footer{position:fixed;bottom:0;left:0;right:0;background:rgba(245,245,247,.85);backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:16px}
   footer .hint{font-size:12px;color:var(--faint)}
   footer .hint b{color:var(--dim);font-weight:600}
@@ -184,6 +192,8 @@ document.getElementById("title").innerHTML = (DATA.title || DATA.campaign) + '<s
 document.getElementById("modeBadge").textContent = DATA.mode === "style" ? "Style pick" : "Batch review";
 
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(_) {} }
+function generalNote(){ return (state.__general&&state.__general.n)||""; }
+function angleNote(id){ return (state.__angles&&state.__angles[id])||""; }
 function decision(id){ return (state[id]&&state[id].d)||"und"; }
 function ph(d){
   if(DATA.mode==="style") return d==="keep"?"What do you like about this one?":"Notes…";
@@ -218,7 +228,7 @@ function angleVerdict(gr){
 function angleHead(gr){
   const a=gr.angle, v=angleVerdict(gr);
   if(gr.key==="__ref") return `<span class="aname">${a.name}</span><span class="atests">${gr.items.length} reference${gr.items.length===1?"":"s"} · what this batch was designed from</span><button class="refs-toggle" onclick="refsOpen=!refsOpen;render()">${refsOpen?"Hide":"Show"}</button>`;
-  return `<span class="aname">${a.name||a.id}</span><span class="aid">${a.id}</span>${a.tests?`<span class="atests">variants test: ${a.tests}</span>`:""}<span class="verdict ${v.cls}" data-angle="${a.id}">${v.text}</span>${a.why?`<div class="awhy">${a.why}</div>`:""}`;
+  return `<span class="aname">${a.name||a.id}</span><span class="aid">${a.id}</span>${a.tests?`<span class="atests">variants test: ${a.tests}</span>`:""}<span class="verdict ${v.cls}" data-angle="${a.id}">${v.text}</span>${a.why?`<div class="awhy">${a.why}</div>`:""}<div class="anote"><textarea data-anote="${a.id}" placeholder="Notes on this whole angle — the idea, not one card">${angleNote(a.id).replace(/</g,"&lt;")}</textarea></div>`;
 }
 function paintAngles(){
   groupItems(DATA.items).forEach(gr=>{ if(gr.key==="__ref"||gr.key==="__none") return; const el=document.querySelector(`.angle-head .verdict[data-angle="${CSS.escape(gr.key)}"]`); if(!el) return; const v=angleVerdict(gr); el.className="verdict "+v.cls; el.textContent=v.text; });
@@ -246,10 +256,17 @@ function render(){
   const g = document.getElementById("grid"); g.innerHTML = "";
   let i = 0;
   const grouped = DATA.items.some(it=>it.angle);
+  if(DATA.mode!=="style" || DATA.general){
+    const gn=document.createElement("div"); gn.className="general-notes";
+    gn.innerHTML=`<div class="gtitle">General notes — applies to every card</div><div class="ghint">Spacing, sizes, button placement, "all subheads bigger": say it once here and it becomes a batch-wide instruction and a standing preference. Per-angle notes sit on each angle header; per-card notes stay on the cards.</div><textarea placeholder="e.g. all CTAs bottom-right and bigger · subheads bigger · underlines never over the subtext">${generalNote().replace(/</g,"&lt;")}</textarea>`;
+    gn.querySelector("textarea").oninput=e=>{ state.__general={n:e.target.value}; save(); };
+    g.appendChild(gn);
+  }
   groupItems(DATA.items).forEach(gr=>{
     const visible = gr.items.filter(it=> it.kind==="reference" ? filter==="all" : (filter==="all"||filter===decision(it.id)));
     if(!visible.length) return;
-    if((grouped || gr.key==="__ref") && gr.key!=="__none"){ const h=document.createElement("div"); h.className="angle-head"+(gr.key==="__ref"?" refs":""); h.innerHTML=angleHead(gr); g.appendChild(h); }
+    if((grouped || gr.key==="__ref") && gr.key!=="__none"){ const h=document.createElement("div"); h.className="angle-head"+(gr.key==="__ref"?" refs":""); h.innerHTML=angleHead(gr); g.appendChild(h);
+      const ta=h.querySelector("textarea[data-anote]"); if(ta) ta.oninput=e=>{ state.__angles=state.__angles||{}; state.__angles[e.target.dataset.anote]=e.target.value; save(); }; }
     if(gr.key==="__ref" && !refsOpen) return;
     gr.items.forEach(it=>{
     const d = decision(it.id);
@@ -398,7 +415,8 @@ document.addEventListener("keydown",e=>{
 document.getElementById("export").onclick=async()=>{
   const out={campaign:DATA.campaign,mode:DATA.mode,exported:new Date().toISOString(),
     decisions:DATA.items.filter(it=>it.kind!=="reference").map(it=>({id:it.id,decision:decision(it.id),note:(state[it.id]&&state[it.id].n)||"",angle:angleOf(it)?angleOf(it).id:undefined})),
-    angles:DATA.items.some(it=>it.angle)?groupItems(DATA.items).filter(gr=>gr.key!=="__ref"&&gr.key!=="__none").map(gr=>({id:gr.key,name:gr.angle.name,verdict:angleVerdict(gr).text})):undefined};
+    general_note:generalNote()||undefined,
+    angles:DATA.items.some(it=>it.angle)?groupItems(DATA.items).filter(gr=>gr.key!=="__ref"&&gr.key!=="__none").map(gr=>({id:gr.key,name:gr.angle.name,verdict:angleVerdict(gr).text,note:angleNote(gr.key)||undefined})):undefined};
   const json=JSON.stringify(out,null,2);
   try{ await navigator.clipboard.writeText(json);
     const b=document.getElementById("export"); b.textContent="Copied — paste to Claude"; b.classList.add("done");

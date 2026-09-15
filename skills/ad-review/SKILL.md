@@ -24,6 +24,10 @@ Locate the campaign from the export's `campaign` field. Look, in order: `04-Bran
 
 **Read the renderer's verdicts before you read the operator's.** `render-results.json` in the run folder is *merged by id* (never overwritten) — `by_id[<id>].warnings` and `by_id[<id>].blocking`. **Any concept with a non-empty `blocking` list cannot become `approved`**, whatever the export says, until the manifest carries `override_reason` for it (a real sentence from the operator, dated). Print the blocking ids first, before per-decision work. The AI Course (2026-09-13) approved a table whose "NO SOURCE — cannot ship" flag had been lost to a stdout grep; this is the rule that makes that impossible.
 
+## Batch-wide first — `general_note` and per-angle `note` (export fields since 2026-09-15)
+
+The operator can say a thing once. **`general_note`** applies to every card in the batch: apply it to every revise *and* classify it — a layout / size / placement preference ("all CTAs bottom-right", "subheads bigger", "underlines never over the subtext") is a **template default** (edit the template so the next brand gets it too, then note the brand's version in `rules.md ## Defaults`); a taste line goes to `## Defaults` and `taste.md` verbatim; a compliance line to `## Rules`. **Never make the operator repeat a general note per card** — if the same phrase appears on three or more cards, treat it as general even when the box is empty (The AI Course rev-1: six cards, three identical asks). A per-angle **`note`** is about the idea, not a card: it updates that angle's line in `ad-angles.md` ("more of this", "wrong stage", "needs proof") before any variant is touched.
+
 ## Per angle (before per decision — angle-first batches carry `angle` on each decision and an `angles[]` summary)
 
 - **Any keep in the angle → `status: validated (date)`** in `ad-angles.md`, and the next batch seeds from it. A note like *"LOVE the angle, make more variants"* (c05, 2026-09-14) → set that angle's `variants_per_angle` to 3–4 for the next run and say so in the hand-off.
