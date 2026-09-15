@@ -83,6 +83,13 @@
   .stack .file-card{position:absolute}
   .no-object{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:60px;color:var(--brand-muted);font-size:26px;font-weight:600;border:2px dashed color-mix(in srgb,var(--brand-ink) 25%,transparent);border-radius:24px}
   .stage.empty .no-object{display:flex}
+  /* overlays reserve their own room — a sticky note or the founder never sits over the object's text (rev-1 lesson, 2026-09-14) */
+  .stage.has-note-br .object,.stage.has-note-br .authored{right:230px;bottom:70px}
+  .stage.has-note-bl .object,.stage.has-note-bl .authored{left:230px;bottom:70px}
+  .stage.has-note-tr .object,.stage.has-note-tr .authored{right:230px;top:70px}
+  .stage.has-note-tl .object,.stage.has-note-tl .authored{left:230px;top:70px}
+  .stage.has-founder .object,.stage.has-founder .authored{right:36%}
+  .stage.has-founder.has-note-br .authored,.stage.has-founder.has-note-br .object{right:36%;bottom:0}
 
   .note{position:absolute;right:10px;bottom:10px;transform:rotate(4deg);background:#FFE86B;color:#1a1a1a;padding:26px 30px;min-width:190px;max-width:300px;
         font-family:var(--font-body);font-weight:800;font-size:40px;line-height:1.05;text-align:center;box-shadow:0 18px 34px rgba(0,0,0,.18);z-index:4;letter-spacing:-.01em;text-wrap:balance}
@@ -150,6 +157,9 @@
     const authored = document.querySelector('[data-slot="object-html"]'); const hasAuthored = authored && getComputedStyle(authored).display !== 'none' && authored.innerHTML.trim();
     document.getElementById('stage').classList.toggle('empty', !hasImg && !hasAuthored);
     const note = document.getElementById('note'); const pos = slotText('note-pos') || 'br'; note.className = 'note ' + pos;
+    const stage = document.getElementById('stage'); stage.className = stage.className.replace(/\bhas-\S+/g, '').trim();
+    if (getComputedStyle(note).display !== 'none') stage.classList.add('has-note-' + pos);
+    const founder = document.querySelector('.founder'); if (founder && founder.getAttribute('src')) stage.classList.add('has-founder');
     const fh = slotText('founder-height'); const f = document.querySelector('.founder'); if (fh) f.style.height = fh;
   };
   // scribble underline: drawn AFTER fit settles, one stroke per rendered line of the <em> keyword (hand-drawn: two passes, slight wobble)
@@ -178,6 +188,17 @@
     if (document.getElementById('stage').classList.contains('empty')) flags.push('NO OBJECT — the hero is a real thing (screenshot / photo / real creative / authored card); the stage is empty');
     const words = document.querySelector('.headline').textContent.trim().split(/\s+/).filter(Boolean).length;
     if (words > 6) flags.push(`headline is ${words} words — the references run 2–5; cut`);
+    // overlays covering the object's text — the sticky note and the founder cutout sit above the stage; a note over a card's
+    // last line shipped on the 2026-09-14 rev-1 batch (c01-r1, c02-r1, c06 at 1:1) because the generic visual QA only checks table cells
+    const vis = el => el && getComputedStyle(el).display !== 'none' && el.getClientRects().length;
+    const inter = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    const textLeaves = [...document.querySelectorAll('.authored *')].filter(el => vis(el) && el.children.length === 0 && el.textContent.trim());
+    const cardImg = document.querySelector('.card img'); if (cardImg && vis(cardImg)) textLeaves.push(cardImg);
+    for (const [name, el] of [['sticky note', document.getElementById('note')], ['founder cutout', document.querySelector('.founder')]]) {
+      if (!vis(el)) continue; const r = el.getBoundingClientRect();
+      const hit = textLeaves.filter(t => inter(r, t.getBoundingClientRect()) > 400);
+      if (hit.length) flags.push(`COLLISION: ${name} covers ${hit.length} text element(s) of the object ("${hit[0].textContent.trim().slice(0, 30)}…") — move note-pos / shrink the card / drop the note`);
+    }
     const f = document.querySelector('.founder'); if (f && f.getAttribute('src') && f.naturalWidth && !/\.png$/i.test(f.getAttribute('src'))) flags.push('founder image is not a PNG — a cutout with a transparent background is expected; a rectangular photo will look pasted on');
     return flags;
   };
