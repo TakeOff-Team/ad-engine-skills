@@ -24,6 +24,13 @@ Locate the campaign from the export's `campaign` field. Look, in order: `04-Bran
 
 **Read the renderer's verdicts before you read the operator's.** `render-results.json` in the run folder is *merged by id* (never overwritten) — `by_id[<id>].warnings` and `by_id[<id>].blocking`. **Any concept with a non-empty `blocking` list cannot become `approved`**, whatever the export says, until the manifest carries `override_reason` for it (a real sentence from the operator, dated). Print the blocking ids first, before per-decision work. The AI Course (2026-09-13) approved a table whose "NO SOURCE — cannot ship" flag had been lost to a stdout grep; this is the rule that makes that impossible.
 
+## Per angle (before per decision — angle-first batches carry `angle` on each decision and an `angles[]` summary)
+
+- **Any keep in the angle → `status: validated (date)`** in `ad-angles.md`, and the next batch seeds from it. A note like *"LOVE the angle, make more variants"* (c05, 2026-09-14) → set that angle's `variants_per_angle` to 3–4 for the next run and say so in the hand-off.
+- **Every variant killed → `status: killed (date, reason)`.** Generalize the reason the same way a card kill is classified: a defect → `## Rules`, taste → `## Defaults`, and *why the hypothesis failed* → the angle's own line so it is not re-proposed with new wording. Two variants killed with the same reason is one angle kill, not two card kills.
+- **Mixed (kills + changes, no keep) → stays `proposed`;** the surviving variants re-render, the killed axis value is noted on the angle ("subhead B lost to A").
+- A variant's note that contradicts the angle's premise ("the pull is Remy, not the calls" on a mechanics angle) is an angle verdict, not a card verdict — record it on the angle.
+
 ## Per decision
 
 **Real captures ship through the Meta policy floor:** any screenshot on a keeper (proof-card, social-proof-capture) is checked at *every* aspect for unmasked profanity, names/handles, or content the 4:5 crop hid — TakeOff's 9:16 placement exposed profanity the 4:5 had cropped away. Mask or re-crop before the set ships.

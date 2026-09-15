@@ -79,6 +79,17 @@
   textarea.needs::placeholder{color:var(--revise);opacity:.85}
   .noteflag{display:none;font-size:11px;font-weight:500;color:var(--revise);margin-top:-4px}
   .card.revise .noteflag.show{display:block}
+  /* angle-first batches: items carry angle {id,name,why,tests}; the grid groups them under a header with a live verdict */
+  .angle-head{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:22px 4px 6px;border-top:1px solid var(--line);margin-top:8px}
+  .angle-head:first-child{border-top:none;margin-top:0;padding-top:6px}
+  .angle-head .aname{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .angle-head .aid{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--faint);background:rgba(0,0,0,.05);padding:2px 7px;border-radius:6px}
+  .angle-head .awhy{font-size:12.5px;color:var(--faint);flex-basis:100%;line-height:1.45;max-width:900px}
+  .angle-head .atests{font-size:11.5px;color:var(--faint)}
+  .angle-head .verdict{margin-left:auto;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.05);color:var(--faint)}
+  .angle-head .verdict.win{background:rgba(52,199,89,.14);color:#1f7a3a}
+  .angle-head .verdict.dead{background:rgba(255,59,48,.12);color:#b3261e}
+  .angle-head .verdict.mixed{background:rgba(23,62,245,.10);color:var(--accent)}
   footer{position:fixed;bottom:0;left:0;right:0;background:rgba(245,245,247,.85);backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:16px}
   footer .hint{font-size:12px;color:var(--faint)}
   footer .hint b{color:var(--dim);font-weight:600}
@@ -145,7 +156,35 @@ function ph(d){
   return "Notes…";
 }
 
+function angleOf(it){ if(!it.angle) return null; return typeof it.angle==="string" ? {id:it.angle,name:it.angle} : it.angle; }
+function groupItems(items){
+  const groups=[], byKey={};
+  items.forEach(it=>{
+    const a = it.kind==="reference" ? {id:"__ref",name:"References · context only"} : angleOf(it);
+    const key = a ? a.id : "__none";
+    if(!byKey[key]){ byKey[key]={key, angle:a, items:[]}; groups.push(byKey[key]); }
+    byKey[key].items.push(it);
+  });
+  return groups;
+}
+function angleVerdict(gr){
+  const dec = gr.items.filter(it=>it.kind!=="reference"); if(!dec.length) return {cls:"",text:""};
+  const ds = dec.map(it=>decision(it.id)); const k=ds.filter(d=>d==="keep").length, x=ds.filter(d=>d==="kill").length, r=ds.filter(d=>d==="revise").length, u=ds.filter(d=>d==="und").length;
+  if(k) return {cls:"win", text:`angle validated · ${k} keep${r?" · "+r+" change":""}${x?" · "+x+" kill":""}`};
+  if(x===dec.length) return {cls:"dead", text:"angle killed · every variant"};
+  if(r||x) return {cls:"mixed", text:`${r?r+" change":""}${r&&x?" · ":""}${x?x+" kill":""}${u?" · "+u+" open":""}`};
+  return {cls:"", text:`${dec.length} variant${dec.length===1?"":"s"} · undecided`};
+}
+function angleHead(gr){
+  const a=gr.angle, v=angleVerdict(gr);
+  if(gr.key==="__ref") return `<span class="aname">${a.name}</span>`;
+  return `<span class="aname">${a.name||a.id}</span><span class="aid">${a.id}</span>${a.tests?`<span class="atests">variants test: ${a.tests}</span>`:""}<span class="verdict ${v.cls}" data-angle="${a.id}">${v.text}</span>${a.why?`<div class="awhy">${a.why}</div>`:""}`;
+}
+function paintAngles(){
+  groupItems(DATA.items).forEach(gr=>{ if(gr.key==="__ref"||gr.key==="__none") return; const el=document.querySelector(`.angle-head .verdict[data-angle="${CSS.escape(gr.key)}"]`); if(!el) return; const v=angleVerdict(gr); el.className="verdict "+v.cls; el.textContent=v.text; });
+}
 function updateCounts(){
+  paintAngles();
   let k=0,r=0,x=0,u=0;
   const dec = DATA.items.filter(it=>it.kind!=="reference");
   dec.forEach(it=>{const d=decision(it.id); d==="keep"?k++:d==="revise"?r++:d==="kill"?x++:u++;});
@@ -166,7 +205,12 @@ function paintCard(card, it){
 function render(){
   const g = document.getElementById("grid"); g.innerHTML = "";
   let i = 0;
-  DATA.items.forEach(it=>{
+  const grouped = DATA.items.some(it=>it.angle);
+  groupItems(DATA.items).forEach(gr=>{
+    const visible = gr.items.filter(it=> it.kind==="reference" ? filter==="all" : (filter==="all"||filter===decision(it.id)));
+    if(!visible.length) return;
+    if(grouped && gr.key!=="__none"){ const h=document.createElement("div"); h.className="angle-head"; h.innerHTML=angleHead(gr); g.appendChild(h); }
+    gr.items.forEach(it=>{
     const d = decision(it.id);
     if(it.kind==="reference" && filter!=="all") return;
     if(it.kind!=="reference" && filter!=="all"&&filter!==d) return;
@@ -197,6 +241,7 @@ function render(){
     };
     paintCard(card, it);
     g.appendChild(card);
+    });
   });
   updateCounts();
 }
@@ -275,7 +320,8 @@ document.addEventListener("keydown",e=>{
 });
 document.getElementById("export").onclick=async()=>{
   const out={campaign:DATA.campaign,mode:DATA.mode,exported:new Date().toISOString(),
-    decisions:DATA.items.filter(it=>it.kind!=="reference").map(it=>({id:it.id,decision:decision(it.id),note:(state[it.id]&&state[it.id].n)||""}))};
+    decisions:DATA.items.filter(it=>it.kind!=="reference").map(it=>({id:it.id,decision:decision(it.id),note:(state[it.id]&&state[it.id].n)||"",angle:angleOf(it)?angleOf(it).id:undefined})),
+    angles:DATA.items.some(it=>it.angle)?groupItems(DATA.items).filter(gr=>gr.key!=="__ref"&&gr.key!=="__none").map(gr=>({id:gr.key,name:gr.angle.name,verdict:angleVerdict(gr).text})):undefined};
   const json=JSON.stringify(out,null,2);
   try{ await navigator.clipboard.writeText(json);
     const b=document.getElementById("export"); b.textContent="Copied — paste to Claude"; b.classList.add("done");

@@ -95,7 +95,7 @@ Claims:        "{claim}" → references.md §{ref} · "{claim}" → §{ref}   {o
 Ad-unit copy:  (written in /ad-review on keep — not here)
 ```
 
-One block per concept. `/ad-batch` fills Block B and every Playwright slot **from this file**; `/ad-review` reads it before writing captions so the caption and the creative are one message.
+One block per variant, **grouped under an `## Angle a{n} · {name}` header** (angle-first batches, PLAYBOOK principle 11). Inside an angle, the variants differ on the one axis `ad-angles.md` says they test — when it is `headline`, the pick / v2 / v3 lines *are* the variants and all of them render; when it is `subhead` or `object`, the headline is identical across the angle and only that slot moves. Reserve one line per angle for ad-unit copy (`Primary texts: (deferred)`) so Remy's 3 primary texts × 3 headlines have a home when it is switched on. `/ad-batch` fills Block B and every Playwright slot **from this file**; `/ad-review` reads it before writing captions so the caption and the creative are one message.
 
 ## `--rewrite` mode
 
