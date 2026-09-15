@@ -20,9 +20,10 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 function parseArgs(argv) {
-  const a = { target: null, paper: false, paperFile: null, cols: 4 };
+  const a = { target: null, paper: false, paperFile: null, cols: 4, dir: null };
   for (const x of argv) {
-    if (x === '--paper') a.paper = true;
+    if (x.startsWith('--dir=')) a.dir = x.slice(6);   // any folder of images (a competitor pull) → contact sheet + index there
+    else if (x === '--paper') a.paper = true;
     else if (x.startsWith('--paper=')) { a.paper = true; a.paperFile = x.slice(8); }
     else if (x.startsWith('--cols=')) a.cols = parseInt(x.slice(7), 10) || 4;
     else if (!a.target) a.target = x;
@@ -83,9 +84,9 @@ async function paperMirror(files, titles, brandName, fileId, brandDir) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.target) { console.error('usage: node inspiration.js <brand-dir | slug> [--paper[=<fileId>]] [--cols=4]'); process.exit(1); }
-  const brandDir = resolveBrandDir(args.target);
-  const dir = path.join(brandDir, 'assets', 'inspiration');
+  if (!args.target && !args.dir) { console.error('usage: node inspiration.js <brand-dir | slug> [--paper[=<fileId>]] [--cols=4]   |   node inspiration.js --dir=<folder>'); process.exit(1); }
+  const brandDir = args.dir ? path.resolve(args.dir) : resolveBrandDir(args.target);
+  const dir = args.dir ? path.resolve(args.dir) : path.join(brandDir, 'assets', 'inspiration');
   if (!fs.existsSync(dir)) { console.error(`no ${dir} — ask for references first (ad-onboard Step 2.5)`); process.exit(1); }
   const files = collectImages(dir); const titles = titlesFor(dir);
   if (!files.length) { console.error(`${dir} has no images`); process.exit(1); }

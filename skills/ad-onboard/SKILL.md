@@ -13,7 +13,7 @@ description: |
   files, or "onboard {brand} for ads", "/ad-onboard {url}".
   NOT for: generating ads (/ad-batch), refreshing research on an onboarded
   brand (/ad-research).
-argument-hint: "[url-or-brand-name] [--slug <name>]"
+argument-hint: "[url-or-brand-name] [--slug <name>] [--fresh] [--taste-only]"
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 ---
 
@@ -63,21 +63,28 @@ Write `brand-kit.md`: colors **as hex** and fonts **by name** (they become the m
 
 **No founder on the call?** Derive from the scrape and flag every file — but **ask the operator once, in one line: "do you have a line to {brand}? A results screenshot, headshot permission, and a stated guarantee are the highest-value things anyone could hand us."** **Operator IS the founder** (their own brand)? Say so and turn it into the same list as a to-do: *"you're the brand, so this is a dig-up list, not an email"* — `proof-gaps.md` then reads as their own checklist. Pneuma's run skipped this to save a turn and left 12 documented client results unusable. Then add the category compliance floor to `rules.md` unprompted — food/supplements/licensed marks per PLAYBOOK field notes, and for **every service brand the PLAYBOOK service compliance floor** (numbers traced, no fabricated people, no generated dashboards, no unconfirmed "as featured in", results disclaimer). No founder available? Derive from the scrape and flag every file `derived, not founder-confirmed` — **this is the default, not a question.** Don't ask "real engagement or spec work?"; derive, flag, and state it once at handoff. The PLAYBOOK already prescribes the behavior, so asking spends a turn to reach the same place.
 
-## Step 2.5 — Taste intake (every brand, every time — assume you know nothing about what they like)
+## Step 2.5 — Taste intake (every brand, every time — go deep; the chain will not batch until this is solid)
 
-Charlie Crozier and Remy, 2026-09-13, via Zach: *"make it interview people as much as possible; assume it knows absolutely nothing, including their tastes and what they like. The AI is not going to do everything for them — it amplifies their thoughts at scale."* So this step is never skipped, never inferred from a scrape, never pre-filled from the sweep, and never answered by the operator on the brand's behalf without being flagged `derived, not founder-confirmed`.
+Charlie Crozier and Remy, 2026-09-13, via Zach: *"make it interview people as much as possible; assume it knows absolutely nothing, including their tastes and what they like. The AI is not going to do everything for them — it amplifies their thoughts at scale."* Zach, 2026-09-15: *"ask what should feel like an overkill amount of questions. Really get them to describe their style in detail, and highly recommend voice-to-text — the more context the system has, the better it works. It shouldn't recommend running until it has a great idea of the vision."* So this step is long on purpose, never skipped, never inferred from a scrape, never pre-filled from the sweep, and never answered by the operator on the brand's behalf without being flagged `derived, not founder-confirmed`.
 
-Ask, in one message, and wait:
+**Open by asking them to talk, not type.** Print this, verbatim or close: *"This is the part that decides whether the ads look like you. Talk instead of typing: turn on voice-to-text (Mac: press fn twice · iPhone: the mic key · Wispr Flow / Superwhisper if you have them) and ramble through the questions below in any order. I'd rather have 800 messy words than 40 careful ones. Paste links and drop files as you go."*
 
-1. **"Show me 5–15 things you like."** Anything visual — ads, YouTube thumbnails, posters, packaging, websites, screenshots, your own old creative that worked, a competitor you'd steal from. Files (drop them into `{slug}/assets/inspiration/`), links (I screenshot them), a folder path, a YouTube channel. Not only ads — the point is what stops *your* scroll.
-2. **"For each one, one line: what do you like about it?"** This is the load-bearing answer. The image is ambiguous; the *why* transfers. Push once for it; accept partial.
-3. **"Three things you hate seeing in ads."** Kills before they happen.
-4. **"Three words for how it should feel, and one brand whose look you'd borrow."**
-5. **"A brand guide, if one exists."** PDF / Notion / Figma — it goes into the folder and gets *read*, not summarized away.
+Then the questions, in one message, grouped. Accept any order and any length; **keep asking until every group has something real** — one follow-up per empty group, phrased as "you didn't mention X — anything there?", never a form.
 
-Mechanics: links → `firecrawl_scrape` with `formats: ["screenshot"]` into the folder. A YouTube channel → `yt-dlp --flat-playlist -J <channel>/videos` for the ids, then `https://i.ytimg.com/vi/{id}/maxresdefault.jpg` (Remy's 24 thumbnails, 2026-09-14). Then `node {SKILL_DIR}/render/inspiration.js {slug}` builds `assets/inspiration/contact-sheet.png` + `index.md`; add `--paper` when Paper Desktop is open to mirror the folder onto an Inspiration page in the brand's Paper file (files stay the source of truth — the page is a view).
+- **A. Show me.** 5–15 things you like — ads, YouTube thumbnails, posters, packaging, websites, screenshots, competitors you'd steal from, **your own past creative you're proud of**. Files, links, a folder, a YouTube channel. *For each one, one line: what do you like about it?* Then: three brands whose look you'd borrow, and *which part*.
+- **B. Describe the look in your own words, in detail.** Colours you love and colours you hate. Type: pixel, clean sans, serif, handwritten, loud, quiet. Photo, illustration, or type-only. How much white space. Polished or rough. What era or scene it feels like. If a designer nailed a perfect ad for you tomorrow, describe it as if it's in front of you.
+- **C. What you hate.** Three or more things you never want to see in your ads. An ad you'd be embarrassed to run. Anything a competitor does that makes you cringe.
+- **D. Feel and reader.** Three words for how it should feel. Who is looking at this, where, in what mood. How should they feel after three seconds.
+- **E. Assets.** Brand guide (PDF / Notion / Figma — it gets *read*, not summarised away), font files, logo files, headshots with permission, product shots, screenshots of the real product.
+- **F. The bar.** The best ad you've ever seen in your category, and why it's the best.
 
-Write **`taste.md`** (PLAYBOOK context schema): the references table (file · **their** line · what you see, tagged derived) · the grammar (3–5 moves that repeat across their picks — name them concretely: "grid-paper ground", "one keyword gets a scribble underline", "a real screenshot floating with a shadow") · anti-taste · feel words · polish · brand-guide pointer · **a five-line taste digest** (ground · type move · hero object · decoration · voice on the image). Their line beats your read every time; nothing the person didn't say goes in unflagged. If no references are offered at all, write that at the top, derive from the site + category research, flag every line, and say so at hand-off — never present a derived taste as theirs.
+Mechanics: links → `firecrawl_scrape` with `formats: ["screenshot"]` into `assets/inspiration/`; a YouTube channel → `yt-dlp --flat-playlist -J <channel>/videos` then `https://i.ytimg.com/vi/{id}/maxresdefault.jpg` (Remy's 24 thumbnails, 2026-09-14); files dropped anywhere → moved into the folder. Then `node {SKILL_DIR}/render/inspiration.js {slug}` builds `contact-sheet.png` + `index.md`; add `--paper` when Paper Desktop is open to mirror the folder onto an Inspiration page (files stay the source of truth).
+
+Write **`taste.md`** (PLAYBOOK context schema): frontmatter with **`taste_confidence: high | medium | low`** (below) and `status`; **`## Style in their words`** — the transcript, verbatim and unedited (this is the most valuable block in the file; do not tidy it); the references table (file · **their** line · what you see, tagged derived); the grammar (3–5 moves that repeat across their picks, named concretely: "grid-paper ground", "one keyword gets a scribble underline", "a real screenshot floating with a shadow"); anti-taste; feel words + reader + after-feeling; polish; the bar (F) and why; brand-guide pointer; **a five-line taste digest** (ground · type move · hero object · decoration · voice on the image). Their line beats your read every time; nothing the person didn't say goes in unflagged.
+
+**Readiness gate — `taste_confidence`.** `high` = five or more references each with the person's own why-line, a real style paragraph in their words, three or more hates, feel words, and the bar. `medium` = three or more references with why-lines *or* a real style paragraph, plus some hates. `low` = anything less, or a file built by derivation. **`/ad-engine` refuses to run a batch at `low`** — it prints what's missing and asks for it; at `medium` it runs and says so in the plan line. Never write `high` on a derived file. The gate exists because a batch rendered against a thin taste file is a batch the person will kill for reasons they could have told us up front.
+
+No references and no words offered at all → write that at the top, derive from the site + category research, flag every line, set `low`, and say so at hand-off — never present a derived taste as theirs.
 
 ## Step 3 — Real ads → invoke /ad-research
 
@@ -93,6 +100,8 @@ Invoke **/ad-research** for this slug now (it pulls the brand's + competitors' l
 ## Step 5 — Hand off (no pause)
 
 **The style-gallery export in Step 4 is the one hard stop in onboarding** — nothing renders before the operator has picked. Once it's back: **service brands → write `proof-gaps.md`** (PLAYBOOK context schema): a short, literal, sendable list of what only the client can supply — a real results screenshot for any documented case (unblocks `proof-card`), headshot permission, whether any guarantee/risk-reversal exists (when the category leads with one and the brand states none, that is an **offer gap** to surface, not a silent compliance call), 3-5 quotes from people who *didn't* buy or hesitated. Print: the six files + one line each (including `taste.md`: N references, N with the person's own line, N derived), the style default, anything flagged derived, the proof-gaps list. Then **invoke `/ad-batch` immediately** — do not ask permission.
+
+**`--fresh`:** re-onboard a brand that already exists as if it were new (the cold re-run): move the six context files, `proof-gaps.md` and `real-ads-reference/` to `{slug}/_archive/{YYYY-MM-DD}/`, keep `assets/` (fonts, logo, cutouts, inspiration) and `batches/`, then run every step from Step 0.5 with the sweep pointed at the archive as *facts to confirm*, never as taste. Used for The AI Course, 2026-09-15.
 
 **`--taste-only`:** an already-onboarded brand with no `taste.md` (every brand onboarded before 2026-09-14) runs Step 2.5 alone, rebuilds the style-pick options from the references if the person wants (`--repick`), and hands back to `/ad-batch`.
 

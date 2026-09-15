@@ -21,13 +21,19 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 Never render until someone has looked at real ads for this brand and category (PLAYBOOK principle 3 — Rhoback batch 1 failed exactly here). This skill produces **evidence, not decisions**: the style pick and the operator decide what to do with it. Shared knowledge: `.claude/skills/ad-engine/PLAYBOOK.md` — **Tool fallbacks** and **Field notes**.
 
-## Pull (5-10 minutes, ~$0)
+## Pull — Apify first, at scale (about $0.10 per brand); Playwright screenshots are the fallback
 
-Competitor names come from `brand-guide.md` (2-3) plus the brand itself. Meta Ad Library is public, no login:
-`https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q={name}&search_type=keyword_unordered`
+Competitor names come from `brand-guide.md` (2-3) plus the brand itself. **Default path (2026-09-15, Zach: "it's so cheap to pull ads at scale, and we can use them as inspiration too"):** `curious_coder/facebook-ads-library-scraper` through the Apify MCP, ~$0.00075 per ad.
 
-- Playwright MCP: load each search, screenshot the grid + 1-2 ad details per brand → `{CLIENTS_ROOT}/{slug}/real-ads-reference/`. Playwright dead? Apify fallback per PLAYBOOK (~$0.11/brand, structured JSON + creative URLs).
-- **Check the brand's own page-transparency line.** "This Page isn't currently running ads" is a *finding* (growth may be TikTok/influencer/retail — Bloom), not a dead end.
+1. **Named advertisers** — the Facebook *page URL* of each competitor (never a keyword search on a brand name, see the rules above), `count: 60–100` per brand, active ads, `country: US` unless the brand says otherwise. **Category** — one keyword run on the category term (`search_type=keyword_unordered`), `count: 100`, to see what the *rest* of the feed looks like.
+2. **Cost line before the run:** `N advertisers × ~80 ads + 1 category × 100 ≈ N×$0.06 + $0.08`. Under $1: state it and go. Over $1: ask (the standing rule).
+3. **Download every creative** (`snapshot.images[].original_image_url` / `videos[].video_preview_image_url`) into `real-ads-reference/ads/{advertiser}/` — CDN URLs expire; verify the byte count. Keep the JSON (`ads.json`) with advertiser, start date, copy, landing URL, platform mix — that is the copy-pattern corpus `/ad-copy` reads for the guarantee/offer language.
+4. `node {SKILL_DIR}/../ad-engine/render/inspiration.js --dir real-ads-reference/ads` builds `real-ads-reference/contact-sheet.png` — the *category* at a glance, next to the person's own `assets/inspiration/` sheet.
+5. **The brand's own presence** still comes from the Page transparency line, not from a search.
+
+The scale is the point: two screenshots per competitor showed *a* style; a hundred ads show the distribution — what dominates, what nobody runs (white space), what the copy leans on. These ads go into the style-pick gallery as `kind: "reference"` items (competitor context, no verbs) and are never copied — the person's own references in `taste.md` decide the look; the category tells you what to be different from.
+
+**Apify not connected?** Playwright MCP: load each search, screenshot the grid + 1-2 ad details per brand → `real-ads-reference/`. Say in `findings.md` that the sample is thin (2 ads per brand), so the style pick knows what it's looking at.
 
 ## Read the evidence
 
