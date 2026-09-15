@@ -83,6 +83,9 @@ Digest, don't dump: a few bullets from the context files — never whole files. 
 
 ## Step 4 — Pre-QA (before the human sees anything)
 
+**Quality gate first (PLAYBOOK principle 12).** Read `by_id[<id>].quality` for every render: `healed` → say what the renderer changed in that card's gallery `meta` ("mark dropped: it overlapped the headline"); `fail` → **not a candidate**: fix the spec (drop the element the flag names, shorten the line, pick another object) and re-render with `--only`, or leave it out of the gallery entirely with the reason in the manifest. A card with `QUALITY — cannot ship` in `blocking[]` never appears as a normal card — the operator should never be the one to notice an asterisk on top of a word.
+
+
 **Build one contact sheet, then zoom** — targeted ~1300px crops of pack / logo / claim regions. Do NOT read every image full-size: at batch size that is unaffordable *and* less accurate (the Kodiak contact-sheet pass caught a mirrored brand mark and a wrong net weight that a full-size skim would have missed). Mode-2 renders: the PLAYBOOK mode-2 QA lines (numbers traced, quotes sourced, screenshot real, nothing clipped, tokens applied) — the template warnings are the checklist. Higgsfield renders, per PLAYBOOK **QA truths**: logo placement plausibility + spelling; **zoom small text regions** (flavor strips, claims — headlines render fine, small text garbles); **pack silhouette/geometry**, not just artwork; color vs reference; artifacts (blend smears, warped hands); every `rules.md ## Rules` line. Write findings into each gallery card's `meta` — the human decides with your flags visible, not after your silent pass.
 
 ## Step 5 — Gallery + hand off

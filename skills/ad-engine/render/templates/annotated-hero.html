@@ -160,7 +160,8 @@
   const sync = () => {
     const theme = slotText('theme'); const face = slotText('headline-face'); const arrow = slotText('arrow'); const mark = slotText('mark');
     const sub = document.querySelector('[data-slot="subhead"]'); const hasSub = sub && getComputedStyle(sub).display !== 'none' && sub.textContent.trim();
-    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : '', hasSub ? 'has-subhead' : '', slotText('cta-pos') === 'left' ? 'cta-left' : '', (document.querySelector('.founder')||{}).getAttribute && document.querySelector('.founder').getAttribute('src') ? 'has-founder' : ''].filter(Boolean).join(' ');
+    const healedLeft = document.body.classList.contains('cta-left') && slotText('cta-pos') !== 'left';
+    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : '', hasSub ? 'has-subhead' : '', (slotText('cta-pos') === 'left' || healedLeft) ? 'cta-left' : '', (document.querySelector('.founder')||{}).getAttribute && document.querySelector('.founder').getAttribute('src') ? 'has-founder' : ''].filter(Boolean).join(' ');
     if (document.body.className !== cls) document.body.className = cls;
     const card = document.getElementById('card'); const img = card.querySelector('img');
     const hasImg = !!(img && img.getAttribute('src')); card.classList.toggle('empty', !hasImg);
@@ -170,7 +171,7 @@
     document.getElementById('stage').classList.toggle('empty', !hasImg && !hasAuthored);
     const note = document.getElementById('note'); const pos = slotText('note-pos') || 'br'; note.className = 'note ' + pos;
     const stage = document.getElementById('stage'); stage.className = stage.className.replace(/\bhas-\S+/g, '').trim();
-    if (getComputedStyle(note).display !== 'none') stage.classList.add('has-note-' + pos);
+    if (getComputedStyle(note).display !== 'none') stage.classList.add('has-note-' + pos);   // a healed (hidden) note reserves nothing
     const founder = document.querySelector('.founder'); if (founder && founder.getAttribute('src')) stage.classList.add('has-founder');
     const fh = slotText('founder-height'); const f = document.querySelector('.founder'); if (fh) f.style.height = fh;
   };
@@ -204,6 +205,26 @@
     }
   };
   window.__sync = sync; window.__afterFit = () => { fitAuthored(); drawScribbles(); }; sync(); fitAuthored(); drawScribbles();
+  // self-heal (quality gate): fix what a human would fix without thinking, in the order they would — drop a decoration before
+  // touching the message. Returns the actions taken; [] means "nothing I can do" and the defect stays blocking.
+  const tried = { note: [] };
+  window.__heal = function(flags){
+    const done = [];
+    const has = re => flags.some(f => re.test(f));
+    if (has(/flourish mark/)) { const mk = document.querySelector('.mark'); if (mk && getComputedStyle(mk).display !== 'none') { mk.style.display = 'none'; done.push('mark dropped (it overlapped the headline)'); } }
+    if (has(/sticky note covers/)) {
+      const note = document.getElementById('note'); const posEl = document.querySelector('[data-slot="note-pos"]'); const cur = (posEl.textContent || 'br').trim() || 'br';
+      const order = ['br', 'tr', 'bl', 'tl'].filter(p => p !== cur && !tried.note.includes(p));
+      tried.note.push(cur);
+      if (order.length) { posEl.textContent = order[0]; done.push(`note moved ${cur} → ${order[0]}`); }
+      else if (getComputedStyle(note).display !== 'none') { note.style.display = 'none'; done.push('note dropped (no corner was free)'); }
+    }
+    if (has(/founder cutout covers/)) { const box = document.querySelector('.authored'); const cur = parseFloat(box.style.right) || 42; if (cur < 56) { box.style.right = (cur + 7) + '%'; done.push(`card narrowed to clear the founder (right ${cur + 7}%)`); } }
+    if (has(/CTA sits under the founder/)) { if (!document.body.classList.contains('cta-left')) { document.body.classList.add('cta-left'); done.push('CTA moved bottom-left (founder on the right)'); } }
+    if (has(/scribble underline reaches/)) { const h = document.querySelector('.headline'); const fs = parseFloat(getComputedStyle(h).fontSize); const min = parseFloat(h.dataset.fitMin || '56'); if (fs * 0.92 >= min) { h.style.fontSize = (fs * 0.92) + 'px'; done.push(`headline stepped down to ${Math.round(fs * 0.92)}px so the scribble clears the subhead`); } }
+    if (has(/authored object is .* taller/)) { const note = document.getElementById('note'); if (note && getComputedStyle(note).display !== 'none') { note.style.display = 'none'; done.push('note dropped to give the object room'); } }
+    return done;
+  };
   window.__qa = function(){
     const flags = [];
     const ems = document.querySelectorAll('.headline em').length;

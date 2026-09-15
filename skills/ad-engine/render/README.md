@@ -93,6 +93,7 @@ Three optional hooks a template may define (`__afterFit` added 2026-09-13):
 
 - `window.__sync()` — called once after slots are injected. Do theme/class wiring here. **Do not use a `MutationObserver` that writes to the DOM** — a callback that sets `className` or `textContent`, even to the same value, fires another mutation and `load` never settles (cost the first test run of this renderer).
 - `window.__afterFit()` — called once after `data-fit` has settled and brand fonts are loaded. Put any layout that depends on *final* text sizes here (the comparison table sizes itself to the space the fitted title leaves). Must reset its own inline styles first.
+- `window.__heal(flags)` → `string[]` — the quality gate (2026-09-15). Given the layout flags from `__qa` + the visual QA, fix what a person would fix without thinking (drop an optional decoration, move a note, step a headline down) and return one line per action; the renderer re-fits, re-checks, up to three passes, records `healed[]`, and blocks whatever survives as `QUALITY — cannot ship`. Return `[]` when nothing applies.
 - `window.__qa()` → `string[]` — flags the renderer copies into `render-results.json` warnings and `/ad-batch` copies into the manifest. Use it for anything a human must see before the creative ships (claim checks, authenticity checks, missing evidence).
 
 Every new template gets a fixture in `examples/render-spec.example.json` and a look at the contact sheet before it goes in the PLAYBOOK table.

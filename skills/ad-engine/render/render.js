@@ -307,11 +307,31 @@ async function prepareRender(page, ctx, r, res) {
   await page.evaluate(() => { if (typeof window.__afterFit === 'function') window.__afterFit(); });
   for (const f of fit) if (f.clipped) res.warnings.push(`text still clipped after fit: ${f.slot} @ ${f.size}px`);
   res.fit = fit.map(f => ({ slot: f.slot, size: f.size, clipped: f.clipped, reason: f.reason }));   // record every fit decision — invisible shrinks cost a review round
-  // template-level QA flags (a template may expose window.__qa())
-  const qa = await page.evaluate(() => (typeof window.__qa === 'function' ? window.__qa() : []));
-  for (const q of qa) res.warnings.push(q);
-  // renderer-level visual QA — overflow / crop / contrast (the defects a dimension check can't see)
-  for (const v of await visualQA(page)) res.warnings.push(v);
+  // QUALITY GATE (2026-09-15, Zach: "never spit out a subpar creative"): detect → heal → re-check, up to 3 passes.
+  // A template may expose window.__heal(flags) → [] | ['mark dropped', …]: it fixes what it can (drop an optional decoration,
+  // move a sticky note, step the headline down) and the renderer re-runs fit + QA. Whatever layout defect survives healing
+  // is BLOCKING — it never reaches the gallery as a candidate.
+  const LAYOUT = /^(COLLISION|OVERFLOW|CONTRAST|CROP)\b/;
+  res.healed = [];
+  for (let pass = 0; pass < 4; pass++) {
+    const qa = await page.evaluate(() => (typeof window.__qa === 'function' ? window.__qa() : []));
+    const vq = await visualQA(page);
+    const flags = [...qa, ...vq];
+    const layout = flags.filter(x => LAYOUT.test(x));
+    if (!layout.length || pass === 3) { for (const x of flags) res.warnings.push(x); break; }
+    const actions = await page.evaluate((fl) => (typeof window.__heal === 'function' ? (window.__heal(fl) || []) : []), layout);
+    if (!actions.length) { for (const x of flags) res.warnings.push(x); break; }
+    res.healed.push(...actions.map(a => `pass ${pass + 1}: ${a}`));
+    // re-settle layout after the change
+    await page.evaluate(() => { if (typeof window.__sync === 'function') window.__sync(); });
+    await page.waitForTimeout(30);
+    const refit = await fitText(page);
+    await page.evaluate(() => { if (typeof window.__afterFit === 'function') window.__afterFit(); });
+    res.fit = refit.map(f => ({ slot: f.slot, size: f.size, clipped: f.clipped, reason: f.reason }));
+  }
+  for (const h of res.healed) res.warnings.push(`HEALED — ${h}`);
+  // anything layout-level still standing after healing cannot ship
+  for (const w of res.warnings) if (LAYOUT.test(w)) res.warnings.push(`QUALITY — cannot ship: ${w}`);
   return slots;
 }
 
@@ -394,10 +414,11 @@ async function main() {
     }
     // classify: blocking = the template says it cannot ship without a real asset / a source line
     res.blocking = res.warnings.filter(w => /cannot ship|REQUIRED —|REQUIRED\b|NO SOURCE/i.test(w));
+    res.quality = res.blocking.some(b => /^QUALITY/.test(b)) ? 'fail' : (res.healed && res.healed.length ? 'healed' : 'pass');
     results.push(res);
     const flag = res.ok ? (res.blocking.length ? '⛔' : '✓') : '✗';
     console.log(`  ${flag} ${r.id}  ${path.basename(outFile)}  ${res.ok ? `${w}×${h} · ${(res.bytes / 1024).toFixed(0)} KB` : res.error}`);
-    for (const wmsg of res.warnings) console.log(`      ⚠ ${wmsg}`);
+    for (const wmsg of res.warnings) console.log(`      ${/^HEALED/.test(wmsg) ? '✚' : '⚠'} ${wmsg}`);
   }
 
   let sheet = null;
