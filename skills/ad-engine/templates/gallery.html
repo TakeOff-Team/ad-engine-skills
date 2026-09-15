@@ -90,6 +90,9 @@
   .angle-head .verdict.win{background:rgba(52,199,89,.14);color:#1f7a3a}
   .angle-head .verdict.dead{background:rgba(255,59,48,.12);color:#b3261e}
   .angle-head .verdict.mixed{background:rgba(23,62,245,.10);color:var(--accent)}
+  .angle-head.refs{opacity:.75}
+  .refs-toggle{margin-left:auto;font:inherit;font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+  .refs-toggle:active{transform:scale(.97)}
   footer{position:fixed;bottom:0;left:0;right:0;background:rgba(245,245,247,.85);backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:16px}
   footer .hint{font-size:12px;color:var(--faint)}
   footer .hint b{color:var(--dim);font-weight:600}
@@ -165,8 +168,11 @@ function groupItems(items){
     if(!byKey[key]){ byKey[key]={key, angle:a, items:[]}; groups.push(byKey[key]); }
     byKey[key].items.push(it);
   });
+  // references never lead: the decision work comes first, context sits at the bottom, collapsed (operator, 2026-09-14)
+  const ri = groups.findIndex(g=>g.key==="__ref"); if(ri>-1){ const r=groups.splice(ri,1)[0]; groups.push(r); }
   return groups;
 }
+let refsOpen = false;
 function angleVerdict(gr){
   const dec = gr.items.filter(it=>it.kind!=="reference"); if(!dec.length) return {cls:"",text:""};
   const ds = dec.map(it=>decision(it.id)); const k=ds.filter(d=>d==="keep").length, x=ds.filter(d=>d==="kill").length, r=ds.filter(d=>d==="revise").length, u=ds.filter(d=>d==="und").length;
@@ -177,7 +183,7 @@ function angleVerdict(gr){
 }
 function angleHead(gr){
   const a=gr.angle, v=angleVerdict(gr);
-  if(gr.key==="__ref") return `<span class="aname">${a.name}</span>`;
+  if(gr.key==="__ref") return `<span class="aname">${a.name}</span><span class="atests">${gr.items.length} reference${gr.items.length===1?"":"s"} · what this batch was designed from</span><button class="refs-toggle" onclick="refsOpen=!refsOpen;render()">${refsOpen?"Hide":"Show"}</button>`;
   return `<span class="aname">${a.name||a.id}</span><span class="aid">${a.id}</span>${a.tests?`<span class="atests">variants test: ${a.tests}</span>`:""}<span class="verdict ${v.cls}" data-angle="${a.id}">${v.text}</span>${a.why?`<div class="awhy">${a.why}</div>`:""}`;
 }
 function paintAngles(){
@@ -209,7 +215,8 @@ function render(){
   groupItems(DATA.items).forEach(gr=>{
     const visible = gr.items.filter(it=> it.kind==="reference" ? filter==="all" : (filter==="all"||filter===decision(it.id)));
     if(!visible.length) return;
-    if(grouped && gr.key!=="__none"){ const h=document.createElement("div"); h.className="angle-head"; h.innerHTML=angleHead(gr); g.appendChild(h); }
+    if((grouped || gr.key==="__ref") && gr.key!=="__none"){ const h=document.createElement("div"); h.className="angle-head"+(gr.key==="__ref"?" refs":""); h.innerHTML=angleHead(gr); g.appendChild(h); }
+    if(gr.key==="__ref" && !refsOpen) return;
     gr.items.forEach(it=>{
     const d = decision(it.id);
     if(it.kind==="reference" && filter!=="all") return;
