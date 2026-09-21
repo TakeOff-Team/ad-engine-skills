@@ -36,7 +36,7 @@ Resolve the skill folder: `.claude/skills/ad-engine` if it exists in the project
 
 1. Resolve slug + context root. **Derive the slug deterministically** (PLAYBOOK Context schema — `kodiakcakes.com` → `kodiak-cakes`) and print it before touching any folder; a differing guess between sessions silently forks a duplicate brand. `--slug` always wins.
 ```bash
-if [ -d "04-Brand/clients" ]; then CLIENTS_ROOT="04-Brand/clients"; else CLIENTS_ROOT="clients"; fi
+if [ -d "04-Brand/clients" ]; then CLIENTS_ROOT="04-Brand/clients"; elif [ -d "ad-engine" ]; then CLIENTS_ROOT="ad-engine"; elif [ -d "clients" ]; then CLIENTS_ROOT="clients"; else CLIENTS_ROOT="ad-engine"; fi   # everything the engine makes lives under one folder
 ls $CLIENTS_ROOT/{slug}/ 2>/dev/null
 ```
 2. **All six context files present** (`brand-kit.md`, `brand-guide.md`, `icp.md`, `rules.md`, `assets/references.md`, `taste.md`) → print a one-line status (brand · `brand_type` from `rules.md` frontmatter · style default · taste: N references / confirmed or derived · last batch date · research age) and invoke **/ad-batch**. No questions — Defaults carry the run. **Only `taste.md` missing** (brands onboarded before 2026-09-14) → invoke **/ad-onboard --taste-only** first: the person shows what they like, then the batch runs. **`taste.md` present but `taste_confidence: low`** → do not batch: print the readiness gaps (references without a why-line, no style paragraph, no hates) and invoke **/ad-onboard --taste-only** to fill them. `medium` runs, and the plan line says so. The chain does not recommend running until it has a real picture of the vision (Zach, 2026-09-15).

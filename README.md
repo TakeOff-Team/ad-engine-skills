@@ -22,6 +22,14 @@ claude mcp add --transport http -s user firecrawl https://mcp.firecrawl.dev/YOUR
 
 Higgsfield connects through the connector in your Claude settings. Full list of what is required and what is optional: [REQUIREMENTS.md](REQUIREMENTS.md).
 
+Then, in Claude Code, from the folder you want your ad work to live in:
+
+```
+/ad-engine https://your-brand.com
+```
+
+That is the whole thing. It checks your setup, makes the brand folder, interviews you, asks to see what you like, looks at the ads already running in your category, and opens a gallery. Expect the first run to take a while and to ask you real questions; the runs after it take two actions.
+
 ## See it work in sixty seconds
 
 No brand, no keys, no credits. Renders every template on a fictional brand:
@@ -42,11 +50,15 @@ In Claude Code, in any project folder:
 
 First run for a brand: the chain scrapes the site, reads back what it found for you to confirm, interviews you (your customer, their words, what you cannot claim), asks you to show it what you like and why, pulls real ads from the category, and renders a style gallery in the grammar of your references. You pick a direction. From then on a run is two actions: say "new batch," then click through the review gallery and paste the export.
 
+## Where everything lives
+
+One folder per brand, made for you on the first run: `ad-engine/{brand}/` in whatever project you are working in (or `04-Brand/clients/{brand}/` if your vault already uses that). Inside it: the context files the engine learns from, your references, and a `batches/` folder with one folder per run holding the images, the copy, the Meta ad text and the review page. A plain-language `README.md` in there says what each file is. Nothing is written anywhere else.
+
 ## What you get per brand
 
 - `clients/{brand}/` with six context files the chain reuses forever: brand kit, brand guide, ICP with real customer language, rules that compound, reference and proof inventory, and a taste file built from references you show it and your own words about why you like them. The engine assumes it knows nothing about your taste until you show it.
 - `ads/{brand}-{date}/` per run: every concept rendered at 4:5 for review, `copy.md` with the reader's pain in their words and headline variants, `manifest.json`, the review gallery
-- For everything you keep: the full placement set at 4:5, 1:1 and 9:16, plus a paired caption
+- For everything you keep: the full placement set at 4:5, 1:1 and 9:16, plus the Meta ad text (primary texts, headlines, description, button) written per angle and editable right in the review page
 - With Paper Desktop open: every rendered concept also lands in a Paper file as an editable artboard, brand colours as design tokens, so a designer can fix taste by hand and export
 - Kills become rules. Standing preferences become defaults. The wildcard in every batch keeps the system from converging on last batch.
 

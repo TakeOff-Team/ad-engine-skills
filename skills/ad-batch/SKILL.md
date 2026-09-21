@@ -71,7 +71,7 @@ Digest, don't dump: a few bullets from the context files — never whole files. 
 
 ## Step 3 — Render (two paths, one manifest)
 
-**Output folder:** `04-Brand/clients/{slug}/batches/{YYYY-MM-DD}-{short-name}/` in this vault (CLAUDE.md: client deliverables live under the client — runs before 2026-09-13 sit in `05-Content/Ads/`), `./ads/{slug}-{date}/` portable. `manifest.json` is the campaign's root of truth; `/ad-review` finds it by `campaign` in either location.
+**Output folder — one run, one folder, always the same shape:** `ad-angles.md` · `copy.md` · `ad-unit.md` + `ad-unit.json` · `render-spec.json` · `images/` (+ `images/paper/` when Paper is open) · `render-results.json` · `manifest.json` · `gallery.html` · `captions.md` after review. `04-Brand/clients/{slug}/batches/{YYYY-MM-DD}-{short-name}/` in this vault (CLAUDE.md: client deliverables live under the client — runs before 2026-09-13 sit in `05-Content/Ads/`), `./ads/{slug}-{date}/` portable. `manifest.json` is the campaign's root of truth; `/ad-review` finds it by `campaign` in either location.
 
 **The cost line is printed BEFORE anything is submitted, not after** (The AI Course: `get_cost` ran silently, the job was submitted, and the credits were stated afterwards). One line: `N concepts · N Higgsfield (model · N credits) · N Playwright ($0)` — under the gate, then go.
 

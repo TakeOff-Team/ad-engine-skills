@@ -49,6 +49,10 @@ Zach, 2026-09-16, mid-run: *"how it presents all of this could be a little bit c
 
 Resolve `CLIENTS_ROOT` (PLAYBOOK schema section). For each of the five files that already exists: load it, summarize in one line, ask "reuse or refresh?" — build only the gaps. Then probe tool availability (one cheap Firecrawl call, one Higgsfield `balance` call) — MCP dies at session startup, not call time; the PLAYBOOK fallback table covers every stage, so a dead server changes the tool, never the plan.
 
+## Step 0.05 — Make the home (silent, 2 seconds)
+
+Resolve `CLIENTS_ROOT` (PLAYBOOK) and create the brand's folder with its shape, so nothing the chain writes later has to invent a location: `{CLIENTS_ROOT}/{slug}/` with `assets/`, `assets/inspiration/`, `assets/fonts/`, `real-ads-reference/`, `batches/`, and a **`README.md` in plain language** — one line per file, no jargon ("`voc.md` — your customers' own words, pulled from calls and reviews"; "`taste.md` — what you like, in your words and your references"; "`batches/` — one folder per run: the images, the copy, the review page"). In a project with no vault this is `./ad-engine/{slug}/`, and that single folder is the answer to "where does all this live?". Tell the person once, in one line, at hand-off: *"everything the engine makes for this brand lives in one folder, and here's the path."* Never make them ask.
+
 ## Step 0.1 — Two questions before anything else (10 seconds)
 
 Ask both in one message, before the sweep:
