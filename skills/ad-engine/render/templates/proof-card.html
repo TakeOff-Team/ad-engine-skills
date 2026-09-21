@@ -44,7 +44,7 @@
 
   .top{display:flex;align-items:center;justify-content:space-between}
   .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
-  .brand img{height:48px;width:auto;max-width:240px}
+  .brand img{height:calc(48px * var(--logo-scale,1));width:auto;max-width:240px}
   .brand img[src=""],.brand img:not([src]){display:none}
   .eyebrow{font-family:var(--font-mono,var(--font-body));font-size:19px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:10px 16px;border-radius:999px;
            background:rgba(255,255,255,.10);border:1.5px solid rgba(255,255,255,.28)}

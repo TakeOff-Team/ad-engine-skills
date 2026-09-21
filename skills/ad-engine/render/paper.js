@@ -98,7 +98,27 @@ async function snapshotForPaper(page, brandTokens) {
     const colorOut = (rgb) => { const h = toHex(rgb); if (!h) return null; if (h.a === 0) return null; if (h.a < 1) return toRgba(rgb); return tokenFor(rgb); };
     const fontOut = (fam) => { const first = (fam || '').split(',')[0].trim().replace(/^["']|["']$/g, ''); for (const [name, val] of Object.entries(brandTokens.fonts || {})) if (val && val.toLowerCase() === first.toLowerCase()) return `var(${name})`; return first; };
     const layer = (el, suffix) => { const base = el.dataset && el.dataset.slot ? el.dataset.slot : el.dataset && el.dataset.slotSrc ? el.dataset.slotSrc : (el.className && typeof el.className === 'string' && el.className.trim() ? el.className.trim().split(/\s+/)[0] : el.tagName.toLowerCase()); return esc(base + (suffix ? ' · ' + suffix : '')); };
-    const emit = (html) => { nodes.push(html); count++; };
+    // rotation (2026-09-18): the snapshot is flat and positions come from getBoundingClientRect — a rotated card came out
+    // STRAIGHT in Paper (a4's tilted print, a3's skill.md card). Pre-pass records each rotated element's angle + centre, then
+    // un-rotates it so descendants measure at their true layout positions; every node emitted inside it gets the same
+    // rotate() with transform-origin at the group's centre, so the group turns as one piece.
+    let ctxRot = null;
+    const emit = (html) => {
+      if (ctxRot) {
+        const m = /left:(-?[\d.]+)px;top:(-?[\d.]+)px/.exec(html);
+        if (m) { const ox = ctxRot.cx - parseFloat(m[1]), oy = ctxRot.cy - parseFloat(m[2]);
+          html = html.replace(/style="/, `style="transform:rotate(${ctxRot.deg}deg);transform-origin:${Math.round(ox * 100) / 100}px ${Math.round(oy * 100) / 100}px;`); }
+      }
+      nodes.push(html); count++;
+    };
+    const rotOf = (el) => { const a = el.closest && el.closest('[data-pw-rot]'); return a ? JSON.parse(a.getAttribute('data-pw-rot')) : null; };
+    for (const el of document.querySelectorAll('body *')) {
+      const t = getComputedStyle(el).transform; const mm = /^matrix\(([^)]+)\)/.exec(t || '');
+      if (!mm) continue; const [a, b] = mm[1].split(',').map(parseFloat); if (Math.abs(b) < 1e-4) continue;
+      const rr = el.getBoundingClientRect();
+      el.setAttribute('data-pw-rot', JSON.stringify({ deg: Math.round(Math.atan2(b, a) * 180 / Math.PI * 1000) / 1000, cx: rr.left + rr.width / 2, cy: rr.top + rr.height / 2 }));
+    }
+    for (const el of document.querySelectorAll('[data-pw-rot]')) el.style.transform = 'none';
 
     // a) frame: any element that PAINTS something (background, gradient, border, shadow) becomes a positioned rect
     const frameOf = (el, cs, r) => {
@@ -165,12 +185,35 @@ async function snapshotForPaper(page, brandTokens) {
     const SKIP = new Set(['SCRIPT', 'STYLE', 'LINK', 'META', 'HEAD', 'TITLE', 'NOSCRIPT', 'BR']);
     const walk = (el) => {
       if (SKIP.has(el.tagName)) return;
+      ctxRot = rotOf(el);
       if (el.tagName !== 'BODY' && !vis(el)) return;
       const cs = getComputedStyle(el); const r = el.getBoundingClientRect();
       if (el.tagName === 'IMG') { const h = imgOf(el, cs, r); if (h) emit(h); return; }
-      if (el.tagName !== 'BODY' && el.tagName !== 'HTML') { const f = frameOf(el, cs, r); if (f) emit(f); }
+      // SVG (2026-09-18): was never emitted — the walker found no background on <svg> and dropped it, so every hand-drawn
+      // scribble underline vanished in Paper. Emit it whole, with each shape's COMPUTED paint inlined (the template styles
+      // paths through CSS classes + var(), which Paper never sees).
+      if (el.tagName.toLowerCase() === 'svg') {
+        if (r.width < 1 || r.height < 1) return;
+        const clone = el.cloneNode(true); const src = [...el.querySelectorAll('path,line,polyline,polygon,circle,ellipse,rect')]; const dst = [...clone.querySelectorAll('path,line,polyline,polygon,circle,ellipse,rect')];
+        src.forEach((sn, i) => { const ss = getComputedStyle(sn); const d = dst[i];
+          const stroke = colorOut(ss.stroke) || 'none', fill = colorOut(ss.fill) || 'none';
+          d.removeAttribute('class'); d.setAttribute('stroke', stroke.startsWith('var(') ? (toHex(ss.stroke) || {}).hex || stroke : stroke);
+          d.setAttribute('fill', fill.startsWith('var(') ? (toHex(ss.fill) || {}).hex || fill : fill);
+          d.setAttribute('stroke-width', ss.strokeWidth); d.setAttribute('stroke-linecap', ss.strokeLinecap); d.setAttribute('stroke-linejoin', ss.strokeLinejoin); });
+        clone.removeAttribute('class'); clone.removeAttribute('id'); clone.setAttribute('width', px(r.width)); clone.setAttribute('height', px(r.height));
+        if (!clone.getAttribute('viewBox')) clone.setAttribute('viewBox', `0 0 ${px(r.width)} ${px(r.height)}`);
+        clone.setAttribute('style', `position:absolute;left:${px(r.left)}px;top:${px(r.top)}px;width:${px(r.width)}px;height:${px(r.height)}px;overflow:visible`);
+        emit(clone.outerHTML.replace(/<svg/, `<svg layer-name="${layer(el)}"`)); return;
+      }
+      if (el.tagName !== 'BODY' && el.tagName !== 'HTML') {
+        // inline elements that paint (a highlighter span) wrap across lines: one frame per LINE FRAGMENT, not one union box —
+        // a union box with a partial gradient painted only the last line and moved a real customer's highlight (a2-v1, 2026-09-18)
+        const frags = cs.display === 'inline' ? [...el.getClientRects()] : [];
+        if (frags.length > 1) { for (const fr of frags) { const f = frameOf(el, cs, fr); if (f) emit(f); } }
+        else { const f = frameOf(el, cs, r); if (f) emit(f); }
+      }
       for (const ch of el.childNodes) {
-        if (ch.nodeType === 3) textRuns(ch);
+        if (ch.nodeType === 3) { ctxRot = rotOf(el); textRuns(ch); }
         else if (ch.nodeType === 1) walk(ch);
       }
     };
@@ -236,10 +279,11 @@ async function main() {
   fileUrl = fileUrl || info.url;
   // one page per campaign — artboards never land on whatever page happened to be open (the first annotated batch
   // landed on the Inspiration page because inspiration.js had left it sticky)
-  const pageName = spec.campaign || 'ad-engine';
-  let page = (info.pages || []).find(p => p.name === pageName);
-  if (!page) { const pg = PaperClient.json(await paper.call('create_page', { name: pageName })) || {}; page = { id: pg.pageId || pg.id, name: pageName }; }
-  if (page && page.id) { info = PaperClient.json(await paper.call('open_file', { fileId, pageId: page.id })) || info; }
+  // spec.paper_page lands a run on an existing review page (e.g. "Page 1") instead of the campaign's own page
+  const pageName = spec.paper_page || spec.campaign || 'ad-engine';
+  let paperPage = (info.pages || []).find(p => p.name === pageName);
+  if (!paperPage) { const pg = PaperClient.json(await paper.call('create_page', { fileId,  name: pageName })) || {}; paperPage = { id: pg.pageId || pg.id, name: pageName }; }
+  if (paperPage && paperPage.id) { info = PaperClient.json(await paper.call('open_file', { fileId, pageId: paperPage.id })) || info; }
   console.log(`\nad-engine paper · ${spec.campaign || 'campaign'} · file "${info.fileName || fileId}" · ${info.url || ''}\n`);
 
   // --- fonts: Paper draws from the machine / Google Fonts, not from our @font-face files --------
@@ -264,11 +308,24 @@ async function main() {
   const colors = { '--color-primary': b.primary, '--color-accent': b.accent, '--color-ink': b.ink, '--color-paper': b.paper, '--color-muted': b.muted };
   const fonts = { '--font-display': b.font_display, '--font-body': b.font_body, '--font-mono': b.font_mono };
   try {
-    const existing = PaperClient.json(await paper.call('get_tokens', {})) || {}; const have = new Set(((existing.items || existing.tokens) || []).map(t => t.name));
-    const want = [];
-    for (const [n, v] of Object.entries(colors)) if (v && !have.has(n)) want.push({ type: 'color', name: n, value: v.toUpperCase(), description: `ad-engine brand token from brand-kit.md` });
-    for (const [n, v] of Object.entries(fonts)) if (v && !have.has(n)) want.push({ type: 'fontFamily', name: n, value: v });
-    if (want.length) { await paper.call('create_tokens', { tokens: want }); console.log(`  · ${want.length} brand token(s) created in the Paper file`); }
+    // SYNC, not create-once (2026-09-18, The AI Course): the old version only created MISSING names, so a brand whose palette
+    // changed kept its old values forever — and when get_tokens failed to parse it re-created all of them as DUPLICATES. Paper
+    // resolves the FIRST definition, so the stale set won: the approved creative came out in PP NeueBit on white. Now:
+    // duplicate names are collapsed, changed values are updated in place, missing names are created.
+    const existing = PaperClient.json(await paper.call('get_tokens', { fileId })) || {};
+    const byName = {}; for (const t of ((existing.items || existing.tokens) || [])) (byName[t.name] = byName[t.name] || []).push(t);
+    const target = [...Object.entries(colors).filter(([, v]) => v).map(([n, v]) => ({ type: 'color', name: n, value: v.toUpperCase(), description: 'ad-engine brand token from brand-kit.md' })),
+                    ...Object.entries(fonts).filter(([, v]) => v).map(([n, v]) => ({ type: 'fontFamily', name: n, value: v }))];
+    const create = [], update = []; let collapsed = 0;
+    for (const t of target) {
+      const cur = byName[t.name] || [];
+      if (cur.length > 1) { for (let i = 0; i < cur.length; i++) await paper.call('set_tokens', { fileId, tokens: [{ name: t.name, delete: true }] }); collapsed++; create.push(t); }
+      else if (cur.length === 1) { if (String(cur[0].value).toUpperCase() !== String(t.value).toUpperCase()) update.push({ name: t.name, value: t.value }); }
+      else create.push(t);
+    }
+    if (update.length) await paper.call('set_tokens', { fileId, tokens: update });
+    if (create.length) await paper.call('create_tokens', { fileId, tokens: create });
+    if (create.length || update.length) console.log(`  · brand tokens synced: ${create.length} created · ${update.length} updated · ${collapsed} duplicate name(s) collapsed`);
   } catch (e) { console.log(`  ⚠ tokens skipped: ${e.message}`); }
   const brandTokens = { colors: Object.fromEntries(Object.entries(colors).filter(([, v]) => v).map(([k, v]) => [k, v.toUpperCase()])), fonts: Object.fromEntries(Object.entries(fonts).filter(([, v]) => v)) };
 
@@ -301,18 +358,18 @@ async function main() {
       const snap = await snapshotForPaper(page, brandTokens);
       res.nodes_pushed = snap.count;
       if (args.replace && previous[r.id] && previous[r.id].artboard_id && previous[r.id].file_id === fileId) {
-        try { await paper.call('delete_nodes', { nodeIds: [previous[r.id].artboard_id] }); res.replaced_artboard_id = previous[r.id].artboard_id; }
+        try { await paper.call('delete_nodes', { fileId,  nodeIds: [previous[r.id].artboard_id] }); res.replaced_artboard_id = previous[r.id].artboard_id; }
         catch (e) { res.warnings.push(`could not delete previous artboard ${previous[r.id].artboard_id}: ${e.message}`); }
       }
       // artboard: its name is the export filename Paper will use in ~/Downloads
       const abName = `${base}`;
-      const ab = PaperClient.json(await paper.call('create_artboard', { name: abName, styles: { width: `${w}px`, height: `${h}px`, backgroundColor: snap.background, overflow: 'hidden' } })) || {};
+      const ab = PaperClient.json(await paper.call('create_artboard', { fileId, pageId: paperPage && paperPage.id, name: abName, styles: { width: `${w}px`, height: `${h}px`, backgroundColor: snap.background, overflow: 'hidden' } })) || {};
       artboardId = ab.id || ab.nodeId; res.artboard_id = artboardId;
       if (!artboardId) throw new Error('create_artboard returned no id');
       // push in chunks — write_html is happiest with a few dozen nodes per call
       const CH = 40; res.node_ids = [];
       for (let i = 0; i < snap.html.length; i += CH) {
-        const wh = PaperClient.json(await paper.call('write_html', { targetNodeId: artboardId, mode: 'insert-children', html: snap.html.slice(i, i + CH).join('') })) || {};
+        const wh = PaperClient.json(await paper.call('write_html', { fileId,  targetNodeId: artboardId, mode: 'insert-children', html: snap.html.slice(i, i + CH).join('') })) || {};
         for (const n of wh.createdNodes || []) res.node_ids.push({ id: n.id, name: n.name, type: n.component });
       }
       // export → ~/Downloads/<name>.png → move next to the spec.
@@ -323,7 +380,7 @@ async function main() {
       let got = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
         await new Promise(r => setTimeout(r, attempt === 1 ? 1500 : 2500));
-        const ex = PaperClient.json(await paper.call('export', { nodes: { [artboardId]: [{ format: 'png', scale: '1x' }] } })) || {};
+        const ex = PaperClient.json(await paper.call('export', { fileId,  nodes: { [artboardId]: [{ format: 'png', scale: '1x' }] } })) || {};
         got = (ex.exports || []).find(x => x.nodeId === artboardId) || (ex.exports || [])[0];
         if (!got || !got.filePath || !fs.existsSync(got.filePath)) throw new Error(`export returned no file (${JSON.stringify(ex).slice(0, 200)})`);
         const bytes = fs.statSync(got.filePath).size;
@@ -349,7 +406,7 @@ async function main() {
       res.error = e.message;
     } finally {
       await page.close();
-      if (artboardId) { try { await paper.call('finish_working_on_nodes', { nodeIds: [artboardId] }); } catch (e) {} }
+      if (artboardId) { try { await paper.call('finish_working_on_nodes', { fileId,  nodeIds: [artboardId] }); } catch (e) {} }
     }
     res.blocking = res.warnings.filter(x => /cannot ship|REQUIRED —|REQUIRED\b|NO SOURCE/i.test(x));
     results.push(res);

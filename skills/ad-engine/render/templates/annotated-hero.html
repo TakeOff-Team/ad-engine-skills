@@ -24,6 +24,7 @@
                    *one of object / object-html should be present; the template warns when both are empty.
     object-rotate  (optional) degrees, e.g. "-3" (default -2.5)
     object-width   (optional) CSS width of the card, default "86%"
+    object-frame   (optional) "" white card (default) | "none" — a transparent cutout floats with a drop shadow only
     note           (optional) sticky-note text — short: "91 skills" / "reads the vault"
     note-pos       (optional) tr | br (default) | bl | tl
     arrow          (optional) "" none | "on" — a hand-drawn arrow from the headline toward the object
@@ -45,11 +46,26 @@
   body.theme-lines{background-image:linear-gradient(color-mix(in srgb,var(--brand-ink) 7%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--brand-ink) 7%,transparent) 1px,transparent 1px);background-size:44px 44px}
   body.theme-plain{background-image:none}
   body.theme-ink{background-color:var(--brand-ink);color:#fff;background-image:radial-gradient(circle, rgba(255,255,255,.16) 1.4px, transparent 1.6px)}
+  /* plate (added 2026-09-17, The AI Course — hybrid Concept A): a generated full-bleed ground (paper, grid, hand-drawn marks)
+     that replaces the CSS grid. Optional + additive: empty slot = hidden = no change for any brand that doesn't pass it. */
+  .plate{position:absolute;inset:0;z-index:0;display:none}
+  .plate img{width:100%;height:100%;object-fit:cover;display:block}
+  .plate.on{display:block}
+  body.has-plate{background-image:none}
+  /* plate-ground: keep (2026-09-18) — a TRANSPARENT marks-only plate sits over the real CSS ground, so the ground is the brand
+     token itself and can't drift (round-2 plates came back cream/grey on 3 of 5). */
+  body.has-plate.plate-keep-ground{background-image:radial-gradient(circle, color-mix(in srgb,var(--brand-ink) 14%,transparent) 1.4px, transparent 1.6px)}
+  body.has-plate.plate-keep-ground.theme-plain{background-image:none}
+  body.has-plate.plate-keep-ground.theme-lines{background-image:linear-gradient(color-mix(in srgb,var(--brand-ink) 7%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--brand-ink) 7%,transparent) 1px,transparent 1px)}
+  /* headline-pos: top (2026-09-18) — the headline hangs from the TOP of its box instead of sinking to the bottom (operator, style
+     pick r2: "move the text up… make it larger"). The box KEEPS its fixed height: data-fit sizes the type against that height,
+     and a content-height box (height:auto) makes the fit collapse to its minimum — the same cause as s03's 56px clip, round 1. */
+  body.headline-top .headline-box{align-items:flex-start}
 
   .frame{position:relative;z-index:1;height:100%;padding:60px 64px 56px;display:flex;flex-direction:column}
   .top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:60px}
   .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
-  .brand img{height:52px;width:auto;max-width:260px}
+  .brand img{height:calc(52px * var(--logo-scale,1));width:auto;max-width:260px}
   .brand img[src=""],.brand img:not([src]){display:none}
   .mark{width:84px;height:84px;position:absolute;right:64px;top:48px;display:none;color:var(--brand-accent)}   /* lives in the wordmark row — at 150px it collided with a wide headline (c05-r2) */
   body.mark-asterisk .mark{display:block}
@@ -77,6 +93,9 @@
   .card{width:86%;max-height:100%;transform:rotate(-2.5deg);border-radius:18px;overflow:hidden;box-shadow:0 34px 70px rgba(0,0,0,.20),0 6px 14px rgba(0,0,0,.08);border:1.5px solid color-mix(in srgb,var(--brand-ink) 12%,transparent);background:#fff}
   .card img{display:block;width:100%;height:auto;max-height:100%;object-fit:contain}
   .card img[src=""],.card img:not([src]){display:none}
+  /* object-frame:none — a transparent cutout (a phone capture already in its own frame) floats with a drop shadow, no white card (Stan s03, 2026-09-18: "screenshot of a screenshot") */
+  body.frame-none .card{background:transparent;border:0;box-shadow:none;border-radius:0;overflow:visible;transform:none}
+  body.frame-none .card img{filter:drop-shadow(0 30px 40px rgba(0,0,0,.18)) drop-shadow(0 6px 10px rgba(0,0,0,.08))}
   .card.empty{display:none}
   .authored{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   /* authored object helpers — use inside object-html */
@@ -118,6 +137,8 @@
 </style>
 </head>
 <body>
+<div class="plate" id="plate"><img data-slot-src="plate" data-optional data-crop-ok alt=""></div>
+<span data-slot="plate-ground" data-optional hidden></span><span data-slot="headline-pos" data-optional hidden></span>
 <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><g stroke="currentColor" stroke-width="7" stroke-linecap="round"><path d="M50 8v84M8 50h84M20 20l60 60M80 20L20 80"/></g></svg>
 <div class="frame">
   <div class="top">
@@ -150,6 +171,7 @@
 <span data-slot="headline-face" data-optional hidden></span>
 <span data-slot="object-rotate" data-optional hidden></span>
 <span data-slot="object-width" data-optional hidden></span>
+<span data-slot="object-frame" data-optional hidden></span>
 <span data-slot="note-pos" data-optional hidden></span>
 <span data-slot="arrow" data-optional hidden></span>
 <span data-slot="mark" data-optional hidden></span>
@@ -158,15 +180,20 @@
 <script>
   const slotText = n => ((document.querySelector(`[data-slot="${n}"]`)||{}).textContent || '').trim();
   const sync = () => {
+    const plateImg = document.querySelector('#plate img'); const plateOn = !!(plateImg && plateImg.getAttribute('src'));   // plate: after slot injection
+    document.getElementById('plate').classList.toggle('on', plateOn);
     const theme = slotText('theme'); const face = slotText('headline-face'); const arrow = slotText('arrow'); const mark = slotText('mark');
     const sub = document.querySelector('[data-slot="subhead"]'); const hasSub = sub && getComputedStyle(sub).display !== 'none' && sub.textContent.trim();
     const healedLeft = document.body.classList.contains('cta-left') && slotText('cta-pos') !== 'left';
-    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : '', hasSub ? 'has-subhead' : '', (slotText('cta-pos') === 'left' || healedLeft) ? 'cta-left' : '', (document.querySelector('.founder')||{}).getAttribute && document.querySelector('.founder').getAttribute('src') ? 'has-founder' : ''].filter(Boolean).join(' ');
+    const cls = [theme ? 'theme-' + theme : '', face === 'body' ? 'face-body' : '', arrow && arrow !== 'off' ? 'arrow-on' : '', mark ? 'mark-' + mark : '', hasSub ? 'has-subhead' : '', (slotText('cta-pos') === 'left' || healedLeft) ? 'cta-left' : '', (document.querySelector('.founder')||{}).getAttribute && document.querySelector('.founder').getAttribute('src') ? 'has-founder' : '',
+      // body classes are REBUILT here every sync — anything toggled earlier is wiped (has-plate was silently lost 2026-09-17), so they live in this list
+      plateOn ? 'has-plate' : '', plateOn && slotText('plate-ground') === 'keep' ? 'plate-keep-ground' : '', slotText('headline-pos') === 'top' ? 'headline-top' : ''].filter(Boolean).join(' ');
     if (document.body.className !== cls) document.body.className = cls;
     const card = document.getElementById('card'); const img = card.querySelector('img');
     const hasImg = !!(img && img.getAttribute('src')); card.classList.toggle('empty', !hasImg);
     const rot = slotText('object-rotate'); card.style.transform = `rotate(${rot !== '' ? parseFloat(rot) : -2.5}deg)`;
     const w = slotText('object-width'); if (w) card.style.width = w;
+    document.body.classList.toggle('frame-none', slotText('object-frame') === 'none');
     const authored = document.querySelector('[data-slot="object-html"]'); const hasAuthored = authored && getComputedStyle(authored).display !== 'none' && authored.innerHTML.trim();
     document.getElementById('stage').classList.toggle('empty', !hasImg && !hasAuthored);
     const note = document.getElementById('note'); const pos = slotText('note-pos') || 'br'; note.className = 'note ' + pos;

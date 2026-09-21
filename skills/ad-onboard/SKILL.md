@@ -21,9 +21,42 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 Everything here happens **once**. The six files this produces are why every later run is seamless — invest the care here, not in re-asking later. **The chain assumes it knows nothing about the person — their facts get found and confirmed, their taste gets asked and shown** (PLAYBOOK principle 10; Charlie and Remy, 2026-09-13). Onboarding is where the interviewing happens; batches stay zero-question because this step was thorough. Shared knowledge: `.claude/skills/ad-engine/PLAYBOOK.md` — read **Context schema**, **Tool fallbacks**, and **Field notes** (compliance floor) before starting.
 
+## How to talk to the person (presentation rules — they see the chat, not the machinery)
+
+Zach, 2026-09-16, mid-run: *"how it presents all of this could be a little bit cleaner, readable, legible. It doesn't need to know all the technical side of things."* And: *"make sure you explain what a VoC is, because I don't even know if I know what a VoC is. Think about people that just use AI — they would not know."*
+
+- **Assume they have never run ads and are not technical.** Explain every term the first time it appears, in one plain line, using the glossary below. Same wording every run.
+- **No machinery in the chat.** No file names, folder paths, tool or MCP names, flags, JSON, template names, render paths, or confidence scores. Those go in the files. "I saved what you told me" beats "wrote taste.md with taste_confidence: high".
+- **Lead with what you need and why it helps their ads**, in one or two sentences, then ask. Bold the ask, not the explanation.
+- **One group of questions per message**, numbered, short. Never a wall.
+- **A progress line at the top of each step:** `Step 3 of 6 · Your customer's words`.
+- **Read-backs are a short list in their words** with one line: "correct me on anything." Not a table of sources and paths.
+- **The hand-off is five lines:** what I learned about the brand · your taste in one sentence · what's still missing that only you can get · what happens next · one question, if any.
+- Everything else — every check, gate and file — runs exactly as written below. This section changes what is *said*, never what is *done*.
+
+**Glossary (use these words, once, the first time each comes up):**
+- **VoC (voice of customer):** your customers' own words about their problem, taken from sales calls, reviews and comments. We write ads in their words, not ours.
+- **ICP:** the person who actually buys, described like a real human, not a demographic.
+- **Proof inventory:** the results, quotes and screenshots you are allowed to show. If it is not in there, we do not claim it.
+- **Awareness stage:** how much the reader already knows. A stranger and a repeat customer need different first lines.
+- **Angle:** one reason someone buys. Each batch tests a few.
+- **Variant:** the same angle with one thing changed, so you learn which change mattered.
+- **Wildcard:** one deliberate rule-breaker per batch, so the ads don't all converge.
+- **Placement set:** the three sizes Meta needs, made from one approved creative.
+- **Blocked:** something we will not ship until it is fixed, usually a missing proof or a layout defect.
+
 ## Step 0 — Cache check + tool probe (30 seconds)
 
 Resolve `CLIENTS_ROOT` (PLAYBOOK schema section). For each of the five files that already exists: load it, summarize in one line, ask "reuse or refresh?" — build only the gaps. Then probe tool availability (one cheap Firecrawl call, one Higgsfield `balance` call) — MCP dies at session startup, not call time; the PLAYBOOK fallback table covers every stage, so a dead server changes the tool, never the plan.
+
+## Step 0.1 — Two questions before anything else (10 seconds)
+
+Ask both in one message, before the sweep:
+
+1. **"Is this for your own brand, or for a client?"** *Own brand* → you are talking to the founder; their answers are facts. *Client* → you are talking to an operator: everything they say about the customer is flagged `derived, not founder-confirmed` until the client confirms, the taste intake becomes something they send the client (offer to write that message), and the proof-gaps list is written as a forwardable email. Record it in `rules.md` frontmatter as `operator: founder | agency`.
+2. **"Is this an e-commerce brand (a physical product) or a service?"** This is a confirmation, not a fork — `brand_type` is decided at the scrape and three things hang off it (which fidelity block, which model row, which compliance floor). Asking up front means a wrong guess is corrected before any file is written, not after a batch. A product brand photographs the product; a service brand photographs a proxy subject and leans on proof, and gets the service compliance floor plus `proof-gaps.md`.
+
+Both answers go in the status line at hand-off. Nothing else changes; the chain does not split into two branches (Zach, 2026-09-17: the service gap is a context and template problem, not a routing problem).
 
 ## Step 0.5 — Context sweep (before any question — find what they already have)
 

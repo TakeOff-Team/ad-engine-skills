@@ -58,9 +58,21 @@ If `icp.md` has no VoC quotes, say so at the top of `copy.md` and write from the
 - **CTA** — describes the benefit, not the action (*"See how the phone starts ringing"* beats *"Learn more"*). Fit the template's button: 2–5 words.
 - **Template-specific slots** — proof-card numbers, testimonial quote (verbatim, `<mark>` on the payoff phrase, source line), table rows, notes-body paragraphs. Every one of them from the inventory.
 
+**5b. The three cold-reader questions — the creative must answer all three.** (Zach, 2026-09-18: *"our copywriting has been fine, but a lot of the time it's missing context."* Every AI Course review round said it: *"not sure it explains enough — so what if I've watched every AI video"*, *"needs a bit more context about the AI system in the sub headers"*, *"what's 'it'?"*, *"why this one?"*) For someone who has never heard of the brand: **(a) what is this**, **(b) who is it for**, **(c) why care now**. The headline carries the hook and may answer only one of them. **The subhead is therefore required, not optional, and it carries (a)** — the product named and the outcome, in plain words ("The AI Course: build a working AI system on your own machine, live, in about two weeks"). The object, card or note may carry (b) or (c). A creative where all three are missing is a picture, not an ad.
+
+**5c. No em dashes. Ever.** (Zach, 2026-09-18: *"an instant dead giveaway when it comes to AI."*) No `—` and no `–` used as punctuation in any line a customer sees: headline, subhead, CTA, note, card text, caption, ad-unit copy. Use a period, a comma, a colon, or a new line. An attribution goes on its own line ("Greg, on Trustpilot"), never "— Greg". A range keeps its en dash ("3–5", "Jan–Aug"); that is typography, not an AI tell. Hyphens inside words ("14-day", "e-comm") are fine. The renderer blocks any creative that carries one.
+
 **6. Claims ledger.** Every digit, percentage, timeframe, name, and quote in the copy → the line in `assets/references.md` it comes from. **No ledger entry, no claim.** A number you can't trace gets rewritten into a claim you can (*"$124.4K in 30 days"* with no source becomes *"the phone started ringing in week one"* only if *that* is documented — otherwise it's the mechanism, not a result).
 
-**7. The test.** Read the headline aloud as **a cold reader who has never heard of the brand** — the default audience for paid social. **Every pronoun needs a referent inside the creative.** "If *it* doesn't deliver", "why *this one* is different" and "a *system* that runs" all failed review on The AI Course because a scroller has no idea what *it*, *this one* or *system* means. Name the category ("an AI system", "The AI Course"). Then read it aloud as the reader. Ask: is this *about me*, or about them? Would I say this sentence to a friend about my own problem? Does it pass the AI-tells list? Would a competitor's name fit in this headline unchanged (then it isn't specific enough)?
+**7. The test — write the cold read down.** For every concept, add one line to `copy.md`: `Cold read: "{what a stranger would say this ad is selling, after two seconds}"`. If you cannot write that line, or it is vague ("something about AI"), the copy is not finished — rewrite before any render. This is the check the operator was doing by hand on every review round. Then read the headline aloud as **a cold reader who has never heard of the brand** — the default audience for paid social. **Every pronoun needs a referent inside the creative.** "If *it* doesn't deliver", "why *this one* is different" and "a *system* that runs" all failed review on The AI Course because a scroller has no idea what *it*, *this one* or *system* means. Name the category ("an AI system", "The AI Course"). Then read it aloud as the reader. Ask: is this *about me*, or about them? Would I say this sentence to a friend about my own problem? Does it pass the AI-tells list? Would a competitor's name fit in this headline unchanged (then it isn't specific enough)?
+
+**8. Ad-unit copy — per ANGLE, the text that ships with the image.** (Zach, 2026-09-18; field research with sources: `06-Projects/ad-creative-workshop/meta-ad-unit-research.md`.) Meta takes up to five options each for primary text, headline and description and **mixes them per viewer**, so every headline has to read correctly next to every primary text. That is Remy's "3 primary texts × 3 headlines, any pairing" rule, and it is why this is written per angle, not per image. For each angle write:
+- **3 to 5 primary texts**, three shapes: one that lands in **40 characters** (Reels truncates there), one at **~125** (the feed's "see more" line), one longer story or proof version.
+- **3 to 5 headlines**, **40 characters max**, the strongest under **27** (mobile truncation).
+- **1 to 2 descriptions**, **25 characters**. Often hidden; support only, never the message.
+- **One CTA button** from Meta's fixed list, matched to the objective, plus one alternate.
+- **Display link** and the UTM template `utm_source=meta&utm_medium=paid&utm_campaign={campaign}&utm_content={angle}-{variant}`.
+Write the character count next to every line. Run the pairing check: read each headline against each primary text and fix any pair that repeats itself or contradicts. Every line obeys the claims ledger and rule 5c (no em dashes). Output `ad-unit.md` (human-readable, one paste-ready block per angle) **and** `ad-unit.json` (`{angle_id: {primary_texts, headlines, descriptions, cta, cta_alt, display_link, url}}`) in the run folder — `/ad-batch` feeds the JSON into the gallery, where the operator edits it in place.
 
 ## Batch-level rules
 
@@ -89,11 +101,12 @@ Eyebrow:       {…}
 Headline:      {pick}           [{formula}]
   v2:          {…}              [{formula}]
   v3:          {…}              [{formula}]  {house line, if applicable}
-Subhead:       {…}
+Subhead:       {…}   REQUIRED — names the product and the outcome (cold-reader (a))
 CTA:           {…}
+Cold read:     "{what a stranger would say this is selling}"
 Slots:         {template-specific: quote / numbers / rows / body — verbatim, ready to paste}
 Claims:        "{claim}" → references.md §{ref} · "{claim}" → §{ref}   {or: none}
-Ad-unit copy:  (written in /ad-review on keep — not here)
+Ad-unit copy:  see `ad-unit.md` — written per ANGLE, not per concept (step 8)
 ```
 
 One block per variant, **grouped under an `## Angle a{n} · {name}` header** (angle-first batches, PLAYBOOK principle 11). Inside an angle, the variants differ on the one axis `ad-angles.md` says they test — when it is `headline`, the pick / v2 / v3 lines *are* the variants and all of them render; when it is `subhead` or `object`, the headline is identical across the angle and only that slot moves. Reserve one line per angle for ad-unit copy (`Primary texts: (deferred)`) so Remy's 3 primary texts × 3 headlines have a home when it is switched on. `/ad-batch` fills Block B and every Playwright slot **from this file**; `/ad-review` reads it before writing captions so the caption and the creative are one message.

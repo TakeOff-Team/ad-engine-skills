@@ -72,7 +72,13 @@ class PaperClient {
 
   // convenience: the text of a tool result (most Paper tools answer with a single text block)
   static text(result) { return ((result && result.content) || []).filter(c => c.type === 'text').map(c => c.text).join('\n'); }
-  static json(result) { try { return JSON.parse(PaperClient.text(result)); } catch (e) { return null; } }
+  // Paper ≥ mid-Sept 2026 answers in SEVERAL text blocks — a file/contentHash envelope first, then the payload. Joining them
+  // broke JSON.parse and every id came back empty ("create_artboard returned no id"). Parse each block; the payload is the last.
+  static json(result) {
+    try { return JSON.parse(PaperClient.text(result)); } catch (e) {}
+    const blocks = ((result && result.content) || []).filter(c => c.type === 'text').map(c => { try { return JSON.parse(c.text); } catch (e) { return null; } }).filter(Boolean);
+    return blocks.length ? blocks[blocks.length - 1] : null;
+  }
 }
 
 module.exports = { PaperClient };

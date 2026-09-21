@@ -38,7 +38,7 @@
   .frame{position:relative;z-index:2;height:100%;padding:64px;display:flex;flex-direction:column}
   .top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-shrink:0}
   .brand{display:flex;align-items:center;gap:16px;font-family:var(--font-display);font-weight:800;font-size:30px;letter-spacing:-.01em}
-  .brand img{height:56px;width:auto;max-width:280px;display:block}
+  .brand img{height:calc(56px * var(--logo-scale,1));width:auto;max-width:280px;display:block}
   .brand img[src=""],.brand img:not([src]){display:none}
   .eyebrow{font-family:var(--font-mono,var(--font-body));display:inline-block;font-weight:700;font-size:24px;letter-spacing:.14em;text-transform:uppercase;
            padding:12px 18px;border-radius:999px;background:color-mix(in srgb,var(--brand-on-primary,#fff) 14%,transparent);border:1.5px solid color-mix(in srgb,var(--brand-on-primary,#fff) 35%,transparent)}

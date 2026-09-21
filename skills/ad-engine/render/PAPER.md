@@ -71,3 +71,23 @@ That path needs a design session with Remy's brand in front of a human, not a sc
 3. Run the current batch through `paper.js`; open the file URL from the hand-off line; show that every artboard is editable and that the tokens panel holds the brand.
 4. Ask for one taste fix on one artboard, in Paper, by hand. Export. That is the revise loop designers actually want.
 5. Then pick the format that "sucked" most and design its master together. Fill mode gets built against that.
+
+## 2026-09-18 — five fixes (The AI Course, batch 1 keepers)
+
+Paper's API moved under this script; the first push of an approved creative came out in the banned pixel font, on white, with no underline and a real customer's highlight on the wrong words. Fixed, in order of discovery:
+
+1. **`fileId` on every file-scoped call** (`paper.js`). The live app rejected `create_page` without it. All eight file-scoped calls now pass it explicitly.
+2. **Multi-block responses** (`paper-client.js` `json()`). Paper now answers with a file/contentHash envelope block *then* the payload; joining them broke `JSON.parse`, so every id came back empty ("create_artboard returned no id") and `get_tokens` looked empty. Parses per block; the payload is the last.
+3. **Token SYNC, not create-once** (`paper.js`). The old code only created missing names — so a changed palette kept its old values forever — and, with (2) broken, re-created every token as a **duplicate**. Paper resolves the *first* definition, so the stale 2026-09-12 set won (`--font-display: PP NeueBit`, `--color-paper: #FFFFFF`). Now: duplicates collapsed, changed values updated in place, missing created. This file's 14 duplicated tokens were cleared by hand.
+4. **SVG emitted** (snapshotter). `<svg>` was never emitted (no background → dropped), so every hand-drawn scribble underline vanished. Now emitted whole with each shape's *computed* stroke/fill/width/caps inlined.
+5. **Per-line frames for inline paint** (snapshotter). A multi-line highlighter span was one union box; a partial gradient then painted only the last line and **moved a real quote's emphasis**. Inline elements now emit one frame per line fragment.
+
+Plus **rotation carried through**: rotated elements are measured un-rotated and every node inside gets `rotate()` with `transform-origin` at the group's centre. Paper honours the rotation but not the browser's placement convention exactly — the a4 tilted print lands ≥6 px off (diff 5.5%; the rest of the frame 1.7%). Open: pin down Paper's transform-origin/placement semantics with a probe artboard before claiming rotated groups are faithful.
+
+Result: a2-v1 12.29% → 1.31%. Four of six keepers under 2%; the two rotated-print artboards at ~5.5% for the reason above.
+
+**Page targeting (2026-09-18).** `paper-client.js` is stateless HTTP — no MCP session is kept between calls — so `open_file({pageId})` does NOT persist and "active page" is whatever page the person has open in the app. Batch 1's six artboards landed on *Page 1* beside the 12 Sept ones while their campaign page stayed empty; `get_basic_info` likewise reports the app's active page, not the one you "opened" (it returned the same 12 artboards for every page). `create_artboard` now passes `pageId` explicitly. To verify placement, read `get_children` on `root_node_<pageId>`, never `get_basic_info`. Same root cause as the recurring `get_font_family_info: Open a Paper file` warning.
+
+## Arg shapes + page fix (2026-09-18, later)
+- Batch tools now take arrays: `update_styles {updates:[{nodeIds,styles}]}`, `rename_nodes {updates:[{nodeId,name}]}`, `set_text_content {updates:[{nodeId,textContent}]}`, `duplicate_nodes {nodes:[{id,parentId?}]}` → `duplicatedNodes[].descendantIdMap`.
+- The earlier `pageId` fix never worked: the render loop's `const page = browser.newPage()` shadowed the Paper page. Renamed to `paperPage`. `spec.paper_page` (e.g. "Page 1") now lands a run on an existing review page.

@@ -10,8 +10,8 @@ description: |
   scenes, Playwright HTML→PNG for type / data / UI / quote formats).
   Use when: "make ads for {brand}", "run the ad engine", "generate ad
   creatives", "new ad batch", "/ad-engine".
-  NOT for: video ads (higgsfield-generate), pre-spend scoring (ad-predictor),
-  deep competitor teardowns (meta-ads-analyst).
+  NOT for: video ads (higgsfield-generate), deep competitor teardowns
+  (meta-ads-analyst), pre-spend scoring or publishing (not part of this chain).
 argument-hint: "[url-or-brand-name] [--slug <name>]"
 allowed-tools: Bash, Read, Grep, Glob
 ---
@@ -25,7 +25,9 @@ One brand URL in → reviewed, on-brand ad creatives out, getting smarter every 
 Resolve the skill folder: `.claude/skills/ad-engine` if it exists in the project, else `~/.claude/skills/ad-engine`. Then:
 
 1. **Renderer** — `node {SKILL_DIR}/render/doctor.js` (Node ≥ 18, `render/node_modules`, the Chromium build this Playwright expects, templates present). It prints the exact fix command for anything missing.
-2. **MCP presence, by tool name in this session** (never `claude mcp list` — it health-checks fresh connections and lies about the session): Firecrawl → a tool ending `firecrawl_scrape`; Higgsfield → tools ending `generate_image` and `balance` (make one `balance` call — it proves auth and gives the credit figure for the cost gate); Apify → `call-actor` (optional: named-competitor research); Playwright MCP (optional: Ad Library browsing). **Paper Desktop (optional, mode 3 — editable artboards)** is reported by the doctor in step 1, not by tool name: `render/paper.js` talks to the app directly on localhost, so it works even when no `mcp__paper__*` tools loaded in this session. Fix when wanted: open Paper Desktop.
+2. **MCP presence, by tool name in this session** (never `claude mcp list` — it health-checks fresh connections and lies about the session): Firecrawl → a tool ending `firecrawl_scrape`; Higgsfield → tools ending `generate_image` and `balance` (make one `balance` call — it proves auth and gives the credit figure for the cost gate); Apify → `call-actor` (optional: named-competitor research); Playwright MCP (optional: Ad Library browsing). **Paper Desktop (optional, mode 3 — editable artboards)** is reported by the doctor in step 1, not by tool name: `render/paper.js` talks to the app directly on localhost, so it works even when no `mcp__paper__*` tools loaded in this session. Open Paper Desktop and every batch **also** pushes editable artboards into the brand's Paper file, automatically — Playwright still renders and still carries the quality gate, Paper is an add-on, never a replacement (2026-09-17).
+**The doctor checks these five and nothing else** — Firecrawl, Higgsfield, Apify (optional), Playwright MCP (optional), Paper Desktop (optional). Never list other servers the user happens to have configured, and never present a model id as a tool: `nano_banana_pro` / `nano_banana_2` are Higgsfield models, not an MCP (Zach, 2026-09-16).
+
 3. Print one table — `tool · status · what it unlocks · fix` — using the community install pattern for anything missing: `claude mcp add --transport http -s user <name> <url>` (both flags required: `--transport http` for hosted servers, `-s user` so it works in every folder).
 
 **Degrade, don't block**, except: **no Firecrawl and no pasted brand facts → stop** (nothing to onboard from); **no Higgsfield AND renderer not ready → stop** (nothing can render). One dead optional never changes the plan — the PLAYBOOK fallback table covers every stage.

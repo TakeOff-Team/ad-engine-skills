@@ -115,7 +115,8 @@ function cssTokens(brand = {}, notes = []) {
     '--brand-muted': brand.muted || '#6B6B73',
     '--font-display': brand.font_display ? `"${brand.font_display}", Inter, system-ui, sans-serif` : 'Inter, system-ui, sans-serif',
     '--font-body': brand.font_body ? `"${brand.font_body}", Inter, system-ui, sans-serif` : 'Inter, system-ui, sans-serif',
-    '--display-scale': brand.display_scale ? String(brand.display_scale) : '1',   // pixel faces draw small for their em (PP NeueBit ≈1.45)
+    '--display-scale': brand.display_scale ? String(brand.display_scale) : '1',
+    '--logo-scale': brand.logo_scale ? String(brand.logo_scale) : '1',   // brand.logo_scale — multiplier on every template's logo height (Stan, 2026-09-18: "make the logo a little larger")   // pixel faces draw small for their em (PP NeueBit ≈1.45)
     '--display-lh': brand.display_line_height ? String(brand.display_line_height) : '.96',   // bitmap faces (PP NeueBit) need ~.62–.7
     '--font-mono': brand.font_mono ? `"${brand.font_mono}", ui-monospace, Menlo, monospace` : 'var(--font-body)',
   };
@@ -204,7 +205,12 @@ async function visualQA(page) {
     // 1) overflow: content that spills past its parent box or off the canvas (not glyph-box descenders from tight line-height)
     const VW = document.documentElement.clientWidth, VH = document.documentElement.clientHeight;
     document.querySelectorAll('[data-slot], td, th').forEach(el => {
-      if (!vis(el) || !el.textContent.trim()) return;
+      // 2026-09-17: an image-only authored object (no text at all) used to return here and was NEVER checked for leaving the canvas —
+      // a print running off the bottom of h5 (The AI Course) passed as 'quality: pass'. Containers are now always checked; the
+      // text-clipping checks below still only run on elements that actually carry text.
+      if (!vis(el)) return;
+      const hasTxt = !!el.textContent.trim();
+      if (!hasTxt && !el.children.length) return;
       const name = el.dataset.slot || el.tagName.toLowerCase();
       const r = el.getBoundingClientRect(), p = el.parentElement ? el.parentElement.getBoundingClientRect() : r;
       // a visible-overflow container of positioned children (an authored object stack) is not 'clipped' when a child leaves
@@ -212,11 +218,15 @@ async function visualQA(page) {
       const cs = getComputedStyle(el); const ownText = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
       let ow = el.scrollWidth - el.clientWidth;                          // horizontal: nowrap text wider than its cell
       if (cs.overflow === 'visible' && !ownText && el.children.length) {
-        const kids = [...el.querySelectorAll('*')].filter(vis).map(k => k.getBoundingClientRect());
-        const off = kids.some(k => k.right > VW + 2 || k.left < -2 || k.bottom > VH + 2 || k.top < -2);
+        // data-bleed-ok (2026-09-17, The AI Course hybrid): an image/decor layer that runs off the canvas BY DESIGN (edge bleed —
+        // the reference grammar). Opt-in, like data-crop-ok. Text is ALWAYS checked, even inside a bleed layer: a cut-off word blocks.
+        const offR = r => r.right > VW + 2 || r.left < -2 || r.bottom > VH + 2 || r.top < -2;
+        const ownTxt = k => [...k.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+        const off = [...el.querySelectorAll('*')].filter(vis).some(k => offR(k.getBoundingClientRect()) && (ownTxt(k) || !k.closest('[data-bleed-ok]')));
         ow = off ? 999 : 0;
         if (off) { out.push(`OVERFLOW: "${name}" has content outside the canvas — the object is too big for the stage`); return; }
       }
+      if (!hasTxt) return;                                              // below: text-clipping checks only
       const spillY = Math.max(r.bottom - p.bottom, r.bottom - VH);       // vertical: past the parent box or off the canvas
       const spillX = Math.max(r.right - VW, 0);
       if (ow > 3) out.push(`OVERFLOW: "${name}" is ${ow}px wider than its box — text is clipped or colliding`);
@@ -237,7 +247,16 @@ async function visualQA(page) {
       const lost = ia > ca ? 1 - ca / ia : 1 - ia / ca; // fraction of the wider axis discarded
       if (lost > .10) out.push(`CROP: image "${img.dataset.slotSrc}" loses ${Math.round(lost * 100)}% of its ${ia > ca ? 'width' : 'height'} under object-fit:cover — content may be cut (use a matched crop or fit:contain)`);
     });
-    // 3) contrast of every text slot against its real ground (skipped over photos)
+    // 3) em / en dash in any visible slot — a copy defect, not a layout one (Zach, 2026-09-18: "an instant dead giveaway
+    //    when it comes to AI"). Hyphens inside words are fine; only U+2014 / U+2013 fail. Never auto-rewritten: fix the copy.
+    document.querySelectorAll('[data-slot]').forEach(el => {
+      if (!vis(el)) return; const t = el.textContent || '';
+      // an em dash is always a defect. An en dash is fine INSIDE a range (3–5, Jan–Aug, 1–30) and a defect anywhere else.
+      const prose = t.replace(/(\d|\b[A-Z][a-z]{2})\u2013(?=\d|[A-Z][a-z]{2}\b)/g, '');
+      const bad = /\u2014/.test(t) ? 'em dash' : (/\u2013/.test(prose) ? 'en dash' : null);
+      if (bad) out.push(`COPY — cannot ship: ${bad} in "${el.dataset.slot}" ("${t.trim().slice(0, 48)}") — use a period, comma, colon or a new line (ranges like 3–5 are fine)`);
+    });
+    // 4) contrast of every text slot against its real ground (skipped over photos)
     document.querySelectorAll('[data-slot]').forEach(el => {
       if (!vis(el) || !el.textContent.trim() || el.hidden) return;
       if (hasImageGround(el)) return;
@@ -320,7 +339,7 @@ async function prepareRender(page, ctx, r, res) {
   // A template may expose window.__heal(flags) → [] | ['mark dropped', …]: it fixes what it can (drop an optional decoration,
   // move a sticky note, step the headline down) and the renderer re-runs fit + QA. Whatever layout defect survives healing
   // is BLOCKING — it never reaches the gallery as a candidate.
-  const LAYOUT = /^(COLLISION|OVERFLOW|CONTRAST|CROP)\b/;
+  const LAYOUT = /^(COLLISION|OVERFLOW|CONTRAST|CROP)\b/;   // healable geometry; COPY flags are never healed, only blocked
   res.healed = [];
   for (let pass = 0; pass < 4; pass++) {
     const qa = await page.evaluate(() => (typeof window.__qa === 'function' ? window.__qa() : []));
@@ -422,7 +441,7 @@ async function main() {
       await page.close();
     }
     // classify: blocking = the template says it cannot ship without a real asset / a source line
-    res.blocking = res.warnings.filter(w => /cannot ship|REQUIRED —|REQUIRED\b|NO SOURCE/i.test(w));
+    res.blocking = res.warnings.filter(w => /cannot ship|REQUIRED —|REQUIRED\b|NO SOURCE/i.test(w));   // includes QUALITY (unhealed layout) and COPY (em dash)
     res.quality = res.blocking.some(b => /^QUALITY/.test(b)) ? 'fail' : (res.healed && res.healed.length ? 'healed' : 'pass');
     results.push(res);
     const flag = res.ok ? (res.blocking.length ? '⛔' : '✓') : '✗';

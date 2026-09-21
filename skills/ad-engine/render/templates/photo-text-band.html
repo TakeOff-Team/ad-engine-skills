@@ -43,7 +43,7 @@
   .band.ink{background:var(--brand-ink)} .band.paper{background:var(--brand-paper);color:var(--brand-ink)}
   .band-top-row{display:flex;align-items:center;justify-content:space-between;gap:20px}
   .brand{display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:800;font-size:26px;opacity:.95}
-  .brand img{height:44px;width:auto;max-width:220px}
+  .brand img{height:calc(44px * var(--logo-scale,1));width:auto;max-width:220px}
   .brand img[src=""],.brand img:not([src]){display:none}
   .headline-box{height:190px;display:flex;align-items:flex-end}
   .headline{font-family:var(--font-display);font-weight:900;font-size:72px;line-height:var(--display-lh,1);letter-spacing:-.035em;text-wrap:balance;width:100%}

@@ -101,6 +101,27 @@
   .angle-head .anote{flex-basis:100%;margin-top:6px}
   .angle-head .anote textarea{width:100%;min-height:34px;resize:vertical;font:inherit;font-size:12.5px;line-height:1.4;padding:7px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent}
   .angle-head .anote textarea:focus,.angle-head .anote textarea:not(:placeholder-shown){background:#fff;border-style:solid}
+  /* Meta ad copy (2026-09-18): the text that ships with the image — editable here, exported with the review */
+  .adunit{margin-top:4px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:10px}
+  .adunit h4{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--faint);margin:0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+  .adunit h4 .chev{font-size:11px;transition:transform 150ms ease-out}
+  .adunit.open h4 .chev{transform:rotate(90deg)}
+  .adunit .au-body{display:none;flex-direction:column;gap:10px;margin-top:10px}
+  .adunit.open .au-body{display:flex}
+  .au-row{display:flex;flex-direction:column;gap:3px}
+  .au-row label{font-size:11px;color:var(--faint);display:flex;justify-content:space-between;align-items:baseline}
+  .au-row .count{font-variant-numeric:tabular-nums}
+  .au-row .count.over{color:var(--kill);font-weight:600}
+  .au-row .count.warn{color:var(--revise)}
+  .au-row textarea,.au-row input{font:inherit;font-size:13px;line-height:1.45;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#FAFAFB;resize:vertical;width:100%}
+  .au-row textarea{min-height:58px}
+  .au-add{align-self:flex-start;font:inherit;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--dim)}
+  .au-mock{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .au-mock .mtop{padding:9px 11px;font-size:12.5px;line-height:1.4;white-space:pre-wrap}
+  #lightbox .au-mock img{display:block;width:100%;max-width:100%;max-height:132px;object-fit:cover;border-radius:0;background:#F0F0F2;cursor:default}
+  .au-mock .mbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;background:#F5F5F7}
+  .au-mock .mhead{font-size:13px;font-weight:600;line-height:1.25} .au-mock .mdesc{font-size:11px;color:var(--faint)}
+  .au-mock .mcta{flex-shrink:0;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:6px;background:#E4E6EB;color:#1D1D1F;white-space:nowrap}
   footer{position:fixed;bottom:0;left:0;right:0;background:rgba(245,245,247,.85);backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:16px}
   footer .hint{font-size:12px;color:var(--faint)}
   footer .hint b{color:var(--dim);font-weight:600}
@@ -176,6 +197,7 @@
     <div class="lb-status"></div>
     <div class="actions lb-actions"><button class="bk">✓ Keep</button><button class="br">↻ Change</button><button class="bx">✕ Kill</button></div>
     <textarea class="lb-note" placeholder="Notes…"></textarea>
+    <div class="adunit" id="adunit" hidden></div>
     <div class="lb-keys">← → next / previous · K keep · C change · X kill · Esc close</div>
   </aside>
 </div>
@@ -185,6 +207,9 @@
 const DATA = {{GALLERY_DATA}};
 const KEY = "adengine:"+DATA.campaign+":"+DATA.mode;
 let state = {}; try { state = JSON.parse(localStorage.getItem(KEY)||"{}"); } catch(_) { state = {}; }   // data: / sandboxed previews throw
+// brand-wide gallery: items already reviewed carry `decided` {d, n} — seeded so the verdict shows, still changeable; export marks untouched ones `prior`
+DATA.items.forEach(it=>{ if(it.decided && !state[it.id]) state[it.id]={d:it.decided.d, n:it.decided.n||""}; });
+function isPrior(it){ const s=state[it.id]||{}; return !!(it.decided && (s.d||"und")===it.decided.d && (s.n||"")===(it.decided.n||"")); }
 let filter = "all", hovered = null;
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -193,6 +218,21 @@ document.getElementById("modeBadge").textContent = DATA.mode === "style" ? "Styl
 
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(_) {} }
 function generalNote(){ return (state.__general&&state.__general.n)||""; }
+/* Meta ad copy: DATA.ad_units[angleId] is what /ad-copy wrote; state.__adunit[angleId] is what the operator edited here. */
+const AU_LIMITS = {primary_texts:125, headlines:40, descriptions:25};
+const AU_LABEL = {primary_texts:"Primary text", headlines:"Headline", descriptions:"Description"};
+function adUnitFor(it){
+  if(!it) return null;
+  const a = angleOf(it); const base = (it.ad_unit) || (a && DATA.ad_units && DATA.ad_units[a.id]) || null;
+  if(!base) return null;
+  const key = it.ad_unit ? ("item:"+it.id) : ("angle:"+(a?a.id:"_"));
+  const edits = (state.__adunit&&state.__adunit[key])||{};
+  return {key, data:{...base, ...edits}, base};
+}
+function adUnitEdit(key, field, value){
+  state.__adunit = state.__adunit||{}; state.__adunit[key] = state.__adunit[key]||{};
+  state.__adunit[key][field] = value; save();
+}
 function angleNote(id){ return (state.__angles&&state.__angles[id])||""; }
 function decision(id){ return (state[id]&&state[id].d)||"und"; }
 function ph(d){
@@ -207,7 +247,7 @@ function angleOf(it){ if(!it.angle) return null; return typeof it.angle==="strin
 function groupItems(items){
   const groups=[], byKey={};
   items.forEach(it=>{
-    const a = it.kind==="reference" ? {id:"__ref",name:"References · context only"} : angleOf(it);
+    const a = it.kind==="reference" ? {id:"__ref",name:DATA.references_label||"References · context only"} : angleOf(it);
     const key = a ? a.id : "__none";
     if(!byKey[key]){ byKey[key]={key, angle:a, items:[]}; groups.push(byKey[key]); }
     byKey[key].items.push(it);
@@ -352,6 +392,44 @@ function paintPanel(){
   P.querySelector(".lb-status").textContent = d==="keep"?"Keep":d==="revise"?"Change":d==="kill"?"Kill":"";
   const ta=P.querySelector(".lb-note"); if(document.activeElement!==ta) ta.value=note; ta.placeholder=ph(d); ta.classList.toggle("needs", d==="revise"&&!note.trim());
   document.querySelector(".lb-nav.prev").disabled = i<=0; document.querySelector(".lb-nav.next").disabled = i>=ids.length-1;
+  paintAdUnit(it);
+}
+function paintAdUnit(it){
+  const box = document.getElementById("adunit"); const au = adUnitFor(it);
+  if(!au || it.kind==="reference"){ box.hidden = true; box.innerHTML=""; return; }
+  box.hidden = false;
+  const d = au.data, esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+  const rows = f => (d[f]||[]).map((v,i)=>{
+    const lim = AU_LIMITS[f], n = String(v||"").length, cls = n>lim ? "over" : (n>lim*0.9 ? "warn" : "");
+    const ctl = f==="primary_texts" ? `<textarea data-f="${f}" data-i="${i}">${esc(v)}</textarea>` : `<input data-f="${f}" data-i="${i}" value="${esc(v)}">`;
+    return `<div class="au-row"><label>${AU_LABEL[f]} ${i+1}<span class="count ${cls}" data-for="${f}-${i}">${n} / ${lim}</span></label>${ctl}</div>`;
+  }).join("");
+  const open = state.__auOpen !== false && state.__auOpen !== undefined ? true : false;
+  box.className = "adunit" + (open ? " open" : "");
+  box.innerHTML = `<h4><span>Meta ad copy${au.key.startsWith("angle:")?" · this angle":""}</span><span class="chev">▶</span></h4><div class="au-body">
+    <div class="au-mock"><div class="mtop">${esc((d.primary_texts||[""])[0]).slice(0,180)}</div><img src="${esc(it.src)}" alt=""><div class="mbar"><div><div class="mhead">${esc((d.headlines||[""])[0])}</div><div class="mdesc">${esc((d.descriptions||[""])[0]||"")}</div></div><div class="mcta">${esc(d.cta||"Learn more")}</div></div></div>
+    ${rows("primary_texts")}${rows("headlines")}${rows("descriptions")}
+    <div class="au-row"><label>Button</label><input data-f="cta" value="${esc(d.cta||"")}"></div>
+    <button class="au-add" data-add="primary_texts">+ primary text</button><button class="au-add" data-add="headlines">+ headline</button></div>`;
+  box.querySelector("h4").onclick = () => { state.__auOpen = !box.classList.contains("open"); save(); box.classList.toggle("open"); };
+  box.querySelectorAll("textarea[data-f],input[data-f]").forEach(el=>{
+    el.oninput = e => {
+      const f = e.target.dataset.f;
+      if(f==="cta"){ adUnitEdit(au.key,"cta",e.target.value); }
+      else {
+        const arr = [...(adUnitFor(it).data[f]||[])]; arr[+e.target.dataset.i] = e.target.value; adUnitEdit(au.key,f,arr);
+        const lim = AU_LIMITS[f], n = e.target.value.length;
+        const c = box.querySelector(`.count[data-for="${f}-${e.target.dataset.i}"]`);
+        if(c){ c.textContent = `${n} / ${lim}`; c.className = "count " + (n>lim?"over":(n>lim*0.9?"warn":"")); }
+      }
+      const m = box.querySelector(".au-mock"); const dd = adUnitFor(it).data;
+      m.querySelector(".mtop").textContent = (dd.primary_texts||[""])[0]||"";
+      m.querySelector(".mhead").textContent = (dd.headlines||[""])[0]||"";
+      m.querySelector(".mdesc").textContent = (dd.descriptions||[""])[0]||"";
+      m.querySelector(".mcta").textContent = dd.cta||"Learn more";
+    };
+  });
+  box.querySelectorAll(".au-add").forEach(b=> b.onclick = () => { const f=b.dataset.add; const arr=[...(adUnitFor(it).data[f]||[]),""]; adUnitEdit(au.key,f,arr); paintAdUnit(it); });
 }
 function lbShow(id, fromEl){
   lbId=id; const it=lbItem(); const img=document.getElementById("lightimg");
@@ -414,8 +492,9 @@ document.addEventListener("keydown",e=>{
 });
 document.getElementById("export").onclick=async()=>{
   const out={campaign:DATA.campaign,mode:DATA.mode,exported:new Date().toISOString(),
-    decisions:DATA.items.filter(it=>it.kind!=="reference").map(it=>({id:it.id,decision:decision(it.id),note:(state[it.id]&&state[it.id].n)||"",angle:angleOf(it)?angleOf(it).id:undefined})),
+    decisions:DATA.items.filter(it=>it.kind!=="reference").map(it=>({id:it.id,campaign:it.campaign||undefined,decision:decision(it.id),note:(state[it.id]&&state[it.id].n)||"",angle:angleOf(it)?angleOf(it).id:undefined,prior:isPrior(it)||undefined})),
     general_note:generalNote()||undefined,
+    ad_unit_edits:(state.__adunit&&Object.keys(state.__adunit).length)?state.__adunit:undefined,
     angles:DATA.items.some(it=>it.angle)?groupItems(DATA.items).filter(gr=>gr.key!=="__ref"&&gr.key!=="__none").map(gr=>({id:gr.key,name:gr.angle.name,verdict:angleVerdict(gr).text,note:angleNote(gr.key)||undefined})):undefined};
   const json=JSON.stringify(out,null,2);
   try{ await navigator.clipboard.writeText(json);

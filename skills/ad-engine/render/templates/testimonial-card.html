@@ -37,7 +37,7 @@
 
   .top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
   .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-weight:800;font-size:28px}
-  .brand img{height:48px;width:auto;max-width:240px}
+  .brand img{height:calc(48px * var(--logo-scale,1));width:auto;max-width:240px}
   .brand img[src=""],.brand img:not([src]){display:none}
   .stars{font-size:34px;letter-spacing:4px;color:var(--brand-accent);font-family:system-ui}
 
