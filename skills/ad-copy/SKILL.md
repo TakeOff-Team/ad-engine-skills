@@ -12,9 +12,10 @@ description: |
   does not read or depend on the general direct-response-copy skill.
   Use when: invoked by /ad-batch Step 1.5, or "write the ad copy for {brand}",
   "rewrite these headlines", "/ad-copy {slug}".
-  NOT for: long-form (landing pages, emails), captions/ad-unit copy (/ad-review
-  writes those), angles (/ad-batch Step 1), or anything without an onboarded brand.
-argument-hint: "[slug] [--concepts c01,c02] [--rewrite]"
+  Also writes the Meta ad-unit copy per angle (ad-unit.md / ad-unit.json).
+  NOT for: long-form (landing pages, emails), angles (/ad-batch Step 1), or
+  anything without an onboarded brand.
+argument-hint: "[slug] [--concepts a1-v1,a2-v1] [--rewrite]"
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
@@ -94,15 +95,15 @@ Write the character count next to every line. Run the pairing check: read each h
 # Copy — {brand} · {campaign} · {date}
 
 Offer gap: {one line, or "none found"}
-VoC basis: {N quotes from icp.md} | {"derived — no customer language on file"}
+VoC basis: {N quotes from voc.md, N sources} | {"derived: no customer language on file"}
 Stage spread: unaware {n} · problem {n} · solution {n} · product {n} · most-aware {n}
 
-## c01 · {angle name} · {format} · {render_path}
+## a1-v1 · {angle name} · {format} · {render_path}   (ids are angle-variant; older runs used c01…)
 Reader:        {one line, a person at a moment}
 Their words:   "{VoC quote}" — icp.md §{ref}
 Said better:   {the articulated pain line}
 Stage:         {unaware|problem|solution|product|most-aware}
-Eyebrow:       {…}
+Eyebrow:       (omit unless rules.md Defaults ask for one)
 Headline:      {pick}           [{formula}]
   v2:          {…}              [{formula}]
   v3:          {…}              [{formula}]  {house line, if applicable}

@@ -14,7 +14,16 @@
 const fs = require('fs'), path = require('path');
 
 const dir = path.resolve(process.argv[2] || '.');
-const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'gallery.json'), 'utf8'));
+// gallery.json is optional: a brand's first batch has none yet — build it from the batches/ folder and write it back
+let cfg;
+try { cfg = JSON.parse(fs.readFileSync(path.join(dir, 'gallery.json'), 'utf8')); }
+catch (_) {
+  const bdir = path.join(dir, 'batches');
+  const found = fs.existsSync(bdir) ? fs.readdirSync(bdir).filter(b => fs.existsSync(path.join(bdir, b, 'gallery.html'))).sort() : [];
+  cfg = { title: path.basename(dir), batches: found };
+  fs.writeFileSync(path.join(dir, 'gallery.json'), JSON.stringify(cfg, null, 2));
+}
+if (!cfg.batches || !cfg.batches.length) { console.log('no batches with a gallery.html yet — nothing to combine'); process.exit(0); }
 const tpl = fs.readFileSync(path.join(__dirname, '..', 'templates', 'gallery.html'), 'utf8');
 
 function batchData(b) {

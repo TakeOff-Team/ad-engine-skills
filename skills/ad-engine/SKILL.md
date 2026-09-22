@@ -4,7 +4,7 @@ name: ad-engine
 description: |
   Entry point for the ad-creative chain. Routes to the right stage and gets
   out of the way: brand not onboarded → /ad-onboard (once); onboarded →
-  /ad-batch (every run). The full pipeline lives in five focused skills
+  /ad-batch (every run). The full pipeline lives in six focused skills
   (ad-engine → ad-onboard → ad-research → ad-batch (+ ad-copy) → ad-review) sharing one
   PLAYBOOK.md, one gallery UI, and two render paths (Higgsfield for
   scenes, Playwright HTML→PNG for type / data / UI / quote formats).
@@ -28,7 +28,11 @@ Resolve the skill folder: `.claude/skills/ad-engine` if it exists in the project
 2. **MCP presence, by tool name in this session** (never `claude mcp list` — it health-checks fresh connections and lies about the session): Firecrawl → a tool ending `firecrawl_scrape`; Higgsfield → tools ending `generate_image` and `balance` (make one `balance` call — it proves auth and gives the credit figure for the cost gate); Apify → `call-actor` (optional: named-competitor research); Playwright MCP (optional: Ad Library browsing). **Paper Desktop (optional, mode 3 — editable artboards)** is reported by the doctor in step 1, not by tool name: `render/paper.js` talks to the app directly on localhost, so it works even when no `mcp__paper__*` tools loaded in this session. Open Paper Desktop and every batch **also** pushes editable artboards into the brand's Paper file, automatically — Playwright still renders and still carries the quality gate, Paper is an add-on, never a replacement (2026-09-17).
 **The doctor checks these five and nothing else** — Firecrawl, Higgsfield, Apify (optional), Playwright MCP (optional), Paper Desktop (optional). Never list other servers the user happens to have configured, and never present a model id as a tool: `nano_banana_pro` / `nano_banana_2` are Higgsfield models, not an MCP (Zach, 2026-09-16).
 
-3. Print one table — `tool · status · what it unlocks · fix` — using the community install pattern for anything missing: `claude mcp add --transport http -s user <name> <url>` (both flags required: `--transport http` for hosted servers, `-s user` so it works in every folder).
+3. Print one short table — `tool · status · what it unlocks · fix` — with the **exact** fix, never a placeholder:
+   - Firecrawl missing → `claude mcp add --transport http -s user firecrawl https://mcp.firecrawl.dev/YOUR_API_KEY/v2/mcp` (free key at firecrawl.dev; both flags required: `--transport http` for hosted servers, `-s user` so it works in every folder), then restart Claude Code.
+   - Higgsfield missing → connect it through the Higgsfield connector in Claude's settings (Settings → Connectors), then restart Claude Code. It needs credits; a typical batch is 4 to 20.
+   - Renderer not ready → paste the one command the doctor printed into a terminal (Terminal app on Mac), then run `/ad-engine` again.
+   This is the one place tool names belong in front of the person; say what each one is for in six words.
 
 **Degrade, don't block**, except: **no Firecrawl and no pasted brand facts → stop** (nothing to onboard from); **no Higgsfield AND renderer not ready → stop** (nothing can render). One dead optional never changes the plan — the PLAYBOOK fallback table covers every stage.
 
@@ -36,10 +40,11 @@ Resolve the skill folder: `.claude/skills/ad-engine` if it exists in the project
 
 1. Resolve slug + context root. **Derive the slug deterministically** (PLAYBOOK Context schema — `kodiakcakes.com` → `kodiak-cakes`) and print it before touching any folder; a differing guess between sessions silently forks a duplicate brand. `--slug` always wins.
 ```bash
-if [ -d "04-Brand/clients" ]; then CLIENTS_ROOT="04-Brand/clients"; elif [ -d "ad-engine" ]; then CLIENTS_ROOT="ad-engine"; elif [ -d "clients" ]; then CLIENTS_ROOT="clients"; else CLIENTS_ROOT="ad-engine"; fi   # everything the engine makes lives under one folder
+if [ -d "04-Brand/clients" ]; then CLIENTS_ROOT="04-Brand/clients"; elif [ -d "ad-engine" ]; then CLIENTS_ROOT="ad-engine"; elif [ -d "clients" ]; then CLIENTS_ROOT="clients"; else CLIENTS_ROOT="ad-engine"; fi   # one home; ./clients only when a pre-2026-09-20 install already has it
+ENGINE_DIR="$( [ -d .claude/skills/ad-engine ] && echo .claude/skills/ad-engine || echo ~/.claude/skills/ad-engine )"   # every skill refers to the renderer as {ENGINE_DIR}/render/…
 ls $CLIENTS_ROOT/{slug}/ 2>/dev/null
 ```
-2. **All six context files present** (`brand-kit.md`, `brand-guide.md`, `icp.md`, `rules.md`, `assets/references.md`, `taste.md`) → print a one-line status (brand · `brand_type` from `rules.md` frontmatter · style default · taste: N references / confirmed or derived · last batch date · research age) and invoke **/ad-batch**. No questions — Defaults carry the run. **Only `taste.md` missing** (brands onboarded before 2026-09-14) → invoke **/ad-onboard --taste-only** first: the person shows what they like, then the batch runs. **`taste.md` present but `taste_confidence: low`** → do not batch: print the readiness gaps (references without a why-line, no style paragraph, no hates) and invoke **/ad-onboard --taste-only** to fill them. `medium` runs, and the plan line says so. The chain does not recommend running until it has a real picture of the vision (Zach, 2026-09-15).
+2. **All six context files present** (`brand-kit.md`, `brand-guide.md`, `icp.md`, `rules.md`, `assets/references.md`, `taste.md`) → print one plain status line for the person (brand name · product or service · the style direction in three words · when the last batch ran · how old the category research is) and invoke **/ad-batch**. No questions — Defaults carry the run. **Only `taste.md` missing** (brands onboarded before 2026-09-14) → invoke **/ad-onboard --taste-only** first: the person shows what they like, then the batch runs. **`taste.md` present but `taste_confidence: low`** → ask the one exit question before batching: *"show me five things you like and I'll run the first batch, or say 'run it anyway' and I'll go on what the site and the category say, marked as a guess"*. References → `/ad-onboard --taste-only`, then batch; "run it anyway" → batch with `taste: derived` in the plan line. `medium` runs, and the plan line says so. The chain does not recommend running until it has a real picture of the vision (Zach, 2026-09-15).
 3. **Some or none present** → invoke **/ad-onboard** with whatever was given (URL or name). Onboarding builds only what's missing. `assets/references.md` counts: a brand passing a four-file check without it leaves `/ad-batch` with nothing to ground renders against.
 4. User explicitly asked for research/refresh ("what are competitors running", "refresh the ad research") → invoke **/ad-research** directly.
 5. User pasted a gallery export JSON (`{"campaign":..., "decisions":[...]}`) → invoke **/ad-review** directly. (This works from a cold session — review doesn't need the batch session.)
@@ -47,12 +52,12 @@ ls $CLIENTS_ROOT/{slug}/ 2>/dev/null
 ## The chain (for orientation, not execution)
 
 ```
-/ad-onboard   once per brand   scrape + 5-question interview + style pick
+/ad-onboard   once per brand   folder + sweep + scrape + VoC mining + interview + taste intake + research + style pick
 /ad-research  once, then      real ads for brand + category → findings
               monthly refresh
 /ad-batch     every run       Defaults → angles → /ad-copy → render (Higgsfield | Playwright | hybrid) → pre-QA → gallery
   /ad-copy    inside batch    VoC → pain in their words → stage → headline + variants → claims ledger → copy.md
-/ad-review    every run       export JSON → approve (+ 1:1 / 9:16 set) / revise / kill → captions + rules
+/ad-review    every run       gallery export → keep (+ 1:1 / 9:16 set) / change / kill → captions + rules   (the export field is `decision: keep|revise|kill`; the button says Change)
 ```
 
 The contract that keeps this seamless: **after onboarding, a run is exactly two user actions** — say "new batch," then click through the gallery and paste the export. Everything else is automatic. Any skill in the chain that finds itself asking a question already answered in the context files is violating the design — fix the skill, not the run.
