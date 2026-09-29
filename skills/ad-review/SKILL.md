@@ -9,10 +9,12 @@ description: |
   per brand. Works cold: a pasted export is enough, no batch session
   needed.
   Use when: the user pastes a gallery export JSON ({"campaign":...,
-  "decisions":[...]}), or "process my review", "/ad-review".
+  "decisions":[...]}), types a one-line verdict in chat ("revise a2-v1:
+  shorter headline", "kill a3-v1: too dark", "keep a1-v2"), or says
+  "process my review", "/ad-review".
   NOT for: generating creatives (/ad-batch) or the style-pick export
   during onboarding (/ad-onboard handles that one).
-argument-hint: "[paste the export JSON]"
+argument-hint: "[paste the export JSON, or one line: revise a2-v1: shorter headline]"
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 ---
 
@@ -21,6 +23,8 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 The 30 seconds the operator spent clicking is the most valuable data in the pipeline. Parse it three ways — ship, fix, learn — and never waste a note. Shared knowledge: `.claude/skills/ad-engine/PLAYBOOK.md` — principles 5-7, **QA truths**, **Gallery**.
 
 **Brand-wide export** (`campaign` ends `-all`, from `{client}/gallery.html`): each decision carries its own `campaign` — route it to that batch's manifest; decisions marked `prior: true` were already reviewed and are unchanged, skip them. Everything below applies per routed decision. After the review, re-run `brand-gallery.js` so the page shows the new verdicts.
+
+**One fix does not need an export.** A line typed in chat is a one-decision export: `revise a2-v1: shorter headline`, `kill a3-v1: too dark`, `keep a1-v2`, or several such lines in one message. Locate the batch as the newest folder under the brand's `batches/` whose `manifest.json` carries that id (ask only when two batches share the id), build `{"campaign": ..., "decisions": [{"id", "decision", "note"}]}` from the lines, and run everything below on it exactly as if the gallery had exported it. The gallery export is the path for a full review; this is for the person who saw one thing wrong and wants to say it in a sentence, mid-conversation, without opening anything.
 
 Locate the campaign from the export's `campaign` field. Look, in order: `04-Brand/clients/{slug}/batches/{campaign}/` (the vault convention — CLAUDE.md puts client deliverables under the client), `05-Content/Ads/{campaign}/` (runs before 2026-09-13), `./ads/{campaign}/` (portable); if none match, `grep -rl '"campaign": "{campaign}"' --include=manifest.json` from the project root. `manifest.json` is the source of truth to update.
 
